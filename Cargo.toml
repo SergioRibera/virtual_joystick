@@ -3,4 +3,10 @@ name = "virtual_joystick"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+default = []
+inspect = ["bevy-inspector-egui"]
+
 [dependencies]
+bevy = { version = "0.10.1" }
+bevy-inspector-egui = { version = "0.18", optional = true }
