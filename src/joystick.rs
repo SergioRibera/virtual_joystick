@@ -1,11 +1,13 @@
 use bevy::{
     prelude::*,
     render::Extract,
-    ui::{ExtractedUiNode, ExtractedUiNodes, FocusPolicy, UiStack},
+    ui::{ExtractedUiNode, ExtractedUiNodes, FocusPolicy, RelativeCursorPosition, UiStack},
 };
 
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
+
+use crate::{VirtualJoystickAxis, VirtualJoystickType};
 
 /// The tint color of the image
 ///
@@ -45,6 +47,8 @@ pub struct VirtualJoystickBundle {
     pub(crate) node: Node,
     /// Describes the style including flexbox settings
     pub(crate) style: Style,
+    /// The calculated size based on the given image
+    pub calculated_size: CalculatedSize,
     /// The tint color of the image
     pub(crate) color: TintColor,
     /// The texture atlas image of the node
@@ -62,6 +66,7 @@ pub struct VirtualJoystickBundle {
     /// Indicates the depth at which the node should appear in the UI
     pub(crate) z_index: ZIndex,
     pub(crate) knob_data: VirtualJoystickKnob,
+    pub(crate) cursor_pos: RelativeCursorPosition,
 }
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
@@ -70,17 +75,18 @@ pub struct VirtualJoystickNode {
     pub border_image: Handle<Image>,
     pub knob_image: Handle<Image>,
     pub knob_size: Vec2,
-    pub dead_zone: Vec2,
+    pub dead_zone: f32,
 }
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct VirtualJoystickKnob {
     pub id_drag: Option<u64>,
+    pub dead_zone: f32,
+    pub base_pos: Vec2,
     pub start_pos: Vec2,
     pub current_pos: Vec2,
     pub delta: Vec2,
-    pub dead_zone_rect: Rect,
     pub interactable_zone_rect: Rect,
 }
 
@@ -152,6 +158,8 @@ pub fn extract_joystick_node(
             &VirtualJoystickKnob,
         )>,
     >,
+    j_type: Extract<Res<VirtualJoystickType>>,
+    axis: Extract<Res<VirtualJoystickAxis>>,
 ) {
     for (stack_index, entity) in ui_stack.uinodes.iter().enumerate() {
         if let Ok((uinode, global_transform, color, joystick_node, visibility, data)) =
@@ -163,6 +171,7 @@ pub fn extract_joystick_node(
                 || color.0.a() == 0.0
                 || !images.contains(&joystick_node.border_image)
                 || !images.contains(&joystick_node.knob_image)
+                || data.id_drag.is_none() && **j_type == VirtualJoystickType::Dynamic
             {
                 continue;
             }
@@ -171,12 +180,25 @@ pub fn extract_joystick_node(
                 ..default()
             };
 
+            let border_pos = match **j_type {
+                VirtualJoystickType::Fixed => global_transform
+                    .compute_matrix()
+                    .transform_point3((container_rect.center() - (uinode.size() / 2.)).extend(0.)),
+                VirtualJoystickType::Floating => {
+                    if data.id_drag.is_none() {
+                        global_transform.compute_matrix().transform_point3(
+                            (container_rect.center() - (uinode.size() / 2.)).extend(0.),
+                        )
+                    } else {
+                        data.start_pos.extend(0.)
+                    }
+                }
+                VirtualJoystickType::Dynamic => data.base_pos.extend(0.),
+            };
+
             extracted_uinodes.uinodes.push(ExtractedUiNode {
                 stack_index,
-                transform: global_transform.compute_matrix()
-                    * Mat4::from_translation(
-                        (container_rect.center() - (uinode.size() / 2.)).extend(0.),
-                    ),
+                transform: Mat4::from_translation(border_pos),
                 color: color.0,
                 rect: container_rect,
                 image: joystick_node.border_image.clone(),
@@ -192,19 +214,38 @@ pub fn extract_joystick_node(
             };
 
             let radius = uinode.size().x / 2.;
-            let angle = data.delta.y.atan2(data.delta.x);
-            let dist = f32::min(data.delta.length(), radius);
+            let delta = data.start_pos - data.current_pos;
+            let angle = delta.y.atan2(delta.x);
+            let dist = f32::min(delta.length(), radius);
 
             let x = dist * angle.cos();
             let y = dist * angle.sin();
 
+            let knob_pos = match **j_type {
+                VirtualJoystickType::Fixed => global_transform.compute_matrix().transform_point3(
+                    (container_rect.center() - (uinode.size() / 2.) - axis.handle_xy(x, y))
+                        .extend(0.),
+                ),
+                VirtualJoystickType::Floating => {
+                    if data.id_drag.is_none() {
+                        global_transform.compute_matrix().transform_point3(
+                            (
+                                container_rect.center()
+                                    - (uinode.size() / 2.)
+                                    - axis.handle_xy(x, y)
+                            )
+                                .extend(0.),
+                        )
+                    } else {
+                        (data.start_pos - axis.handle_xy(x, y)).extend(0.)
+                    }
+                }
+                VirtualJoystickType::Dynamic => (data.base_pos + axis.handle_xy(-x, y)).extend(0.),
+            };
+
             extracted_uinodes.uinodes.push(ExtractedUiNode {
                 stack_index,
-                transform: global_transform.compute_matrix()
-                    * Mat4::from_translation(
-                        ((container_rect.center() - (uinode.size() / 2.)) + Vec2::new(-x, y))
-                            .extend(0.),
-                    ),
+                transform: Mat4::from_translation(knob_pos),
                 color: color.0,
                 rect: rect.clone(),
                 image: joystick_node.knob_image.clone(),
@@ -216,3 +257,4 @@ pub fn extract_joystick_node(
         }
     }
 }
+

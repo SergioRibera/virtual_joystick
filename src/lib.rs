@@ -65,19 +65,21 @@ impl Plugin for VirtualJoystickPlugin {
 fn joystick_image_node_system(
     interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
     mut joystick: Query<(
-        &GlobalTransform,
+        &Transform,
+        &mut CalculatedSize,
         &VirtualJoystickNode,
         &mut VirtualJoystickKnob,
     )>,
 ) {
-    for (j_pos, data, mut knob) in joystick.iter_mut() {
-        let j_pos = Vec2::new(j_pos.translation().x, j_pos.translation().y);
+    for (j_pos, mut calculated_size, data, mut knob) in joystick.iter_mut() {
+        let j_pos = j_pos.translation.truncate();
         let Ok((node, _)) = interaction_area.get_single() else {
             return;
         };
-        let interaction_area = Rect::from_corners(j_pos, j_pos + node.size());
-        let dead_zone = Rect::from_center_size(j_pos, data.dead_zone);
-        knob.dead_zone_rect = dead_zone;
+        calculated_size.size = Vec2::new(150., 150.);
+        calculated_size.preserve_aspect_ratio = true;
+        let interaction_area = Rect::from_center_size(j_pos, node.size());
+        knob.dead_zone = data.dead_zone;
         knob.interactable_zone_rect = interaction_area;
     }
 }
@@ -90,7 +92,7 @@ pub struct VirtualJoystickEvent {
 
 impl VirtualJoystickEvent {
     pub fn value(&self) -> Vec2 {
-        -self.value
+        self.value
     }
 
     pub fn direction(&self) -> VirtualJoystickAxis {
@@ -98,22 +100,19 @@ impl VirtualJoystickEvent {
     }
 
     pub fn axis(&self) -> Vec2 {
-        -self.delta
+        self.delta
     }
 
     pub fn snap_value(&self) -> Vec2 {
-        let angle = self.value.angle_between(Vec2::new(0., 1.));
         let x = if self.axis == VirtualJoystickAxis::Both
             || self.axis == VirtualJoystickAxis::Horizontal
         {
-            if angle < 22.5 || angle > 157.5 {
-                0.
+            if self.delta.x > 0. {
+                1.
+            } else if self.delta.x < 0. {
+                -1.
             } else {
-                if self.value.x > 0. {
-                    1.
-                } else {
-                    -1.
-                }
+                0.
             }
         } else {
             0.
@@ -121,14 +120,12 @@ impl VirtualJoystickEvent {
         let y = if self.axis == VirtualJoystickAxis::Both
             || self.axis == VirtualJoystickAxis::Vertical
         {
-            if angle < 67.5 || angle > 112.5 {
-                0.
+            if self.delta.y > 0. {
+                1.
+            } else if self.delta.y < 0. {
+                -1.
             } else {
-                if self.value.y > 0. {
-                    1.
-                } else {
-                    -1.
-                }
+                0.
             }
         } else {
             0.
