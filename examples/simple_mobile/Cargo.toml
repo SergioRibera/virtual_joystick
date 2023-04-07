@@ -1,0 +1,26 @@
+[package]
+name = "simple"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "simple"
+crate-type = ["staticlib", "cdylib"]
+
+[dependencies]
+bevy = "0.10.1"
+virtual_joystick = { path = "../../" }
+
+[package.metadata.android]
+package = "com.sergioribera.simple"
+apk_name = "Simple_Joystick"
+assets = "../../assets"
+resources = "../../assets/android-res"
+build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+
+[package.metadata.android.sdk]
+target_sdk_version = 31
+
+[package.metadata.android.application]
+icon = "@mipmap/ic_launcher"
+label = "Simple Joystick"
