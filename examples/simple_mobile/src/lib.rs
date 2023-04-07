@@ -1,4 +1,7 @@
-use bevy::{prelude::*, window::WindowMode};
+use bevy::{
+    prelude::*,
+    window::{PrimaryWindow, WindowMode},
+};
 
 use virtual_joystick::*;
 
@@ -24,7 +27,10 @@ fn main() {
 // Player with velocity
 struct Player(pub f32);
 
-fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
+fn create_scene(
+    mut cmd: Commands,
+    asset_server: Res<AssetServer>,
+) {
     cmd.spawn(Camera2dBundle {
         transform: Transform::from_xyz(0., 0., 5.0),
         ..default()
@@ -42,7 +48,27 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         },
         ..default()
     })
-    .insert(Player(3.));
+    .insert(Player(100.));
+    // Spawn Interactable Zone
+    cmd.spawn(NodeBundle {
+        background_color: BackgroundColor(Color::ORANGE_RED.with_a(0.15)),
+        style: Style {
+            size: Size {
+                width: Val::Percent(100.),
+                height: Val::Percent(50.),
+            },
+            position_type: PositionType::Absolute,
+            position: UiRect {
+                left: Val::Px(0.),
+                bottom: Val::Px(0.),
+                ..default()
+            },
+            ..default()
+        },
+        ..default()
+    })
+    // Insert interactable Zone component
+    .insert(VirtualJoystickInteractionArea);
     // Spawn Virtual Joystick at horizontal center
     cmd.spawn(
         VirtualJoystickBundle::new(VirtualJoystickNode {
@@ -56,15 +82,14 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             size: Size::all(Val::Px(150.)),
             position_type: PositionType::Absolute,
             position: UiRect {
-                left: Val::Percent(50.),
+                // Center X position
+                left: Val::Percent(35.),
                 bottom: Val::Percent(15.),
                 ..default()
             },
             ..default()
         }),
-    )
-    .insert(BackgroundColor(Color::ORANGE_RED.with_a(0.3)))
-    .insert(VirtualJoystickInteractionArea);
+    );
 }
 
 fn update_joystick(
