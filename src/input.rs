@@ -62,10 +62,6 @@ pub fn update_joystick(
     }
 }
 
-// pub fn elastic_out(t: fxx) -> fxx {
-//     fxx::sin(-13.0 * (t + 1.0) * FRAC_PI_2) * fxx::powf(2.0, -10.0 * t) + 1.0
-// }
-
 pub fn update_joystick_by_mouse(
     mouse_button_input: Res<Input<MouseButton>>,
     mut cursor_evr: EventReader<CursorMoved>,
