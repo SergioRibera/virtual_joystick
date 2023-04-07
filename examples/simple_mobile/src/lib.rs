@@ -34,7 +34,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             translation: Vec3::new(0., 0., 0.),
             ..default()
         },
-        texture: asset_server.load("AllAxis_Plain_Arrows.png"),
+        texture: asset_server.load("Knob.png"),
         sprite: Sprite {
             color: Color::PURPLE,
             custom_size: Some(Vec2::new(50., 50.)),
@@ -46,8 +46,8 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
     // Spawn Virtual Joystick at horizontal center
     cmd.spawn(
         VirtualJoystickBundle::new(VirtualJoystickNode {
-            border_image: asset_server.load("AllAxis_Outline.png"),
-            knob_image: asset_server.load("AllAxis_Plain_Arrows.png"),
+            border_image: asset_server.load("Outline.png"),
+            knob_image: asset_server.load("Knob.png"),
             knob_size: Vec2::new(80., 80.),
             dead_zone: 0.,
         })
