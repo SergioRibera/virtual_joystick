@@ -24,3 +24,9 @@ target_sdk_version = 31
 [package.metadata.android.application]
 icon = "@mipmap/ic_launcher"
 label = "Simple Joystick"
+
+#
+# Important: this solve the [issue](https://github.com/bevyengine/bevy/issues/8322)
+#
+[patch.crates-io]
+android-activity = { git = "https://github.com/MarijnS95/android-activity/", branch = "na-resize"}
