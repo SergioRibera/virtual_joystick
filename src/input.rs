@@ -5,10 +5,6 @@ use crate::{
     VirtualJoystickType,
 };
 
-pub fn run_if_touch(touch_events: EventReader<TouchInput>) -> bool {
-    !touch_events.is_empty()
-}
-
 pub fn run_if_pc() -> bool {
     !["android", "ios"].contains(&std::env::consts::OS)
 }
@@ -20,15 +16,17 @@ pub fn update_joystick(
     axis: Res<VirtualJoystickAxis>,
     j_type: Res<VirtualJoystickType>,
 ) {
-    for e in touch_events.iter() {
-        let pos = e.position;
-        for (_node, mut knob) in joysticks.iter_mut() {
+    for (_node, mut knob) in joysticks.iter_mut() {
+        for e in touch_events.iter() {
+            let pos = e.position;
             match e.phase {
                 // Start drag
                 TouchPhase::Started => {
                     if knob.interactable_zone_rect.contains(pos) && knob.id_drag.is_none() {
                         knob.id_drag = Some(e.id);
                         knob.start_pos = pos;
+                        knob.current_pos = pos;
+                        knob.delta = Vec2::ZERO;
                     }
                 }
                 // Dragging
@@ -48,6 +46,7 @@ pub fn update_joystick(
                     if let Some(id) = knob.id_drag {
                         if e.id == id {
                             knob.id_drag = None;
+                            knob.base_pos = Vec2::ZERO;
                             knob.start_pos = Vec2::ZERO;
                             knob.current_pos = Vec2::ZERO;
                             knob.delta = Vec2::ZERO;
@@ -55,15 +54,16 @@ pub fn update_joystick(
                     }
                 }
             }
-
-            // Send event
-            if knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone {
-                send_values.send(VirtualJoystickEvent {
-                    value: axis.handle(knob.current_pos),
-                    delta: axis.handle(knob.delta),
-                    axis: *axis,
-                });
-            }
+        }
+        // Send event
+        if (knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone)
+            && knob.id_drag.is_some()
+        {
+            send_values.send(VirtualJoystickEvent {
+                value: axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
+                delta: axis.handle_xy(-knob.delta.x, knob.delta.y),
+                axis: *axis,
+            });
         }
     }
 }
@@ -72,10 +72,7 @@ pub fn update_joystick_by_mouse(
     mouse_button_input: Res<Input<MouseButton>>,
     mut cursor_evr: EventReader<CursorMoved>,
     mut send_values: EventWriter<VirtualJoystickEvent>,
-    mut joysticks: Query<(
-        &VirtualJoystickNode,
-        &mut VirtualJoystickKnob,
-    )>,
+    mut joysticks: Query<(&VirtualJoystickNode, &mut VirtualJoystickKnob)>,
     axis: Res<VirtualJoystickAxis>,
     j_type: Res<VirtualJoystickType>,
     windows: Query<&Window>,
@@ -120,7 +117,9 @@ pub fn update_joystick_by_mouse(
         }
 
         // Send event
-        if knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone {
+        if (knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone)
+            && knob.id_drag.is_some()
+        {
             send_values.send(VirtualJoystickEvent {
                 value: axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
                 delta: axis.handle_xy(-knob.delta.x, knob.delta.y),

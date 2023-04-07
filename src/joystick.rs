@@ -244,7 +244,7 @@ pub fn extract_joystick_node(
                         (data.start_pos - axis.handle_xy(x, y)).extend(0.)
                     }
                 }
-                VirtualJoystickType::Dynamic => (data.base_pos + axis.handle_xy(-x, y)).extend(0.),
+                VirtualJoystickType::Dynamic => (data.base_pos - axis.handle_xy(x, y)).extend(0.),
             };
 
             extracted_uinodes.uinodes.push(ExtractedUiNode {

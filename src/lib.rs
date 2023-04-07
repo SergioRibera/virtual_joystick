@@ -11,7 +11,7 @@ mod input;
 mod joystick;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
-use input::{run_if_pc, run_if_touch, update_joystick, update_joystick_by_mouse};
+use input::{run_if_pc, update_joystick, update_joystick_by_mouse};
 pub use joystick::{
     TintColor, VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
 };
@@ -40,11 +40,11 @@ impl Plugin for VirtualJoystickPlugin {
             .add_event::<VirtualJoystickEvent>()
             .add_systems((
                 update_joystick
-                    .run_if(run_if_touch.and_then(not(run_if_pc)))
-                    .in_base_set(CoreSet::Update),
+                    .run_if(not(run_if_pc))
+                    .in_base_set(CoreSet::PreUpdate),
                 update_joystick_by_mouse
                     .run_if(run_if_pc)
-                    .in_base_set(CoreSet::Update),
+                    .in_base_set(CoreSet::PreUpdate),
                 joystick_image_node_system
                     .before(UiSystem::Flex)
                     .in_base_set(CoreSet::PostUpdate),
