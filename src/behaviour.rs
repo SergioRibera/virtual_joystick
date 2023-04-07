@@ -3,8 +3,6 @@ use bevy::prelude::*;
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
 
-use crate::joystick::VirtualJoystickKnob;
-
 #[derive(Resource, Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
 #[cfg_attr(feature = "inspect", reflect(Resource, InspectorOptions))]

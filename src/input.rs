@@ -21,13 +21,14 @@ pub fn update_joystick(
     j_type: Res<VirtualJoystickType>,
 ) {
     for e in touch_events.iter() {
+        let pos = e.position;
         for (_node, mut knob) in joysticks.iter_mut() {
             match e.phase {
                 // Start drag
                 TouchPhase::Started => {
-                    if knob.interactable_zone_rect.contains(e.position) && knob.id_drag.is_none() {
+                    if knob.interactable_zone_rect.contains(pos) && knob.id_drag.is_none() {
                         knob.id_drag = Some(e.id);
-                        knob.start_pos = e.position;
+                        knob.start_pos = pos;
                     }
                 }
                 // Dragging
@@ -37,8 +38,8 @@ pub fn update_joystick(
                             if *j_type == VirtualJoystickType::Dynamic {
                                 knob.base_pos = pos;
                             }
-                            knob.current_pos = e.position;
-                            knob.delta = (knob.start_pos - e.position).normalize_or_zero();
+                            knob.current_pos = pos;
+                            knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
                         }
                     }
                 }
@@ -73,7 +74,6 @@ pub fn update_joystick_by_mouse(
     mut send_values: EventWriter<VirtualJoystickEvent>,
     mut joysticks: Query<(
         &VirtualJoystickNode,
-        &RelativeCursorPosition,
         &mut VirtualJoystickKnob,
     )>,
     axis: Res<VirtualJoystickAxis>,
@@ -81,7 +81,7 @@ pub fn update_joystick_by_mouse(
     windows: Query<&Window>,
 ) {
     let window = windows.single();
-    for (_node, r_pos, mut knob) in joysticks.iter_mut() {
+    for (_node, mut knob) in joysticks.iter_mut() {
         // End drag
         if mouse_button_input.just_released(MouseButton::Left) {
             if let Some(id) = knob.id_drag {
