@@ -66,18 +66,15 @@ fn joystick_image_node_system(
     interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
     mut joystick: Query<(
         &Transform,
-        &mut CalculatedSize,
         &VirtualJoystickNode,
         &mut VirtualJoystickKnob,
     )>,
 ) {
-    for (j_pos, mut calculated_size, data, mut knob) in joystick.iter_mut() {
+    for (j_pos, data, mut knob) in joystick.iter_mut() {
         let j_pos = j_pos.translation.truncate();
         let Ok((node, _)) = interaction_area.get_single() else {
             return;
         };
-        calculated_size.size = Vec2::new(150., 150.);
-        calculated_size.preserve_aspect_ratio = true;
         let interaction_area = Rect::from_center_size(j_pos, node.size());
         knob.dead_zone = data.dead_zone;
         knob.interactable_zone_rect = interaction_area;
