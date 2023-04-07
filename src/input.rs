@@ -1,4 +1,4 @@
-use bevy::{input::touch::TouchPhase, prelude::*, ui::RelativeCursorPosition};
+use bevy::{input::touch::TouchPhase, prelude::*};
 
 use crate::{
     joystick::VirtualJoystickKnob, VirtualJoystickAxis, VirtualJoystickEvent, VirtualJoystickNode,
