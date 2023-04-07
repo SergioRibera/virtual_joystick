@@ -1,4 +1,6 @@
 # Bevy Virtual Joystick
+![VJoystick_Fixed_Preview](https://user-images.githubusercontent.com/56278796/230562577-e173e567-5b61-402e-929d-3d3172b0da83.gif)
+
 [![Crates.io](https://img.shields.io/crates/v/virtual_joystick)](https://crates.io/crates/virtual_joystick)
 
 Create and use a Virtual Joystick in a UI for [bevy](https://bevyengine.org/) Game Engine.
@@ -17,14 +19,14 @@ Aviable and compatible versions
 - Support Axis block (Horizontal, Vertical or Both)
 
 ### Axis
-- Both
-- Horizontal
-- Vertical
+| Both                                                                                                                           | Horizontal                                                                                                                           | Vertical                                                                                                                           |
+|--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| ![VJoystick_Fixed_Both](https://user-images.githubusercontent.com/56278796/230561082-fc8ceb4f-0d7d-47f8-b4b8-64cdf3d713b9.gif) | ![VJoystick_Fixed_Horizontal](https://user-images.githubusercontent.com/56278796/230561186-76dba677-f7c6-41b2-9ce7-5a347f5ce480.gif) | ![VJoystick_Fixed_Vertical](https://user-images.githubusercontent.com/56278796/230561212-1b2a66a2-4fc0-456a-bfbe-5d0c89e2cd3d.gif) |
 
 ### Joystick Types
-- Fixed
-- Floating
-- Dynamic
+| Fixed                                                                                                                          | Floating                                                                                                                          | Dynamic (TODO: Fix movement feel)                                                                                                |
+|--------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| ![VJoystick_Fixed_Both](https://user-images.githubusercontent.com/56278796/230561082-fc8ceb4f-0d7d-47f8-b4b8-64cdf3d713b9.gif) | ![VJoystick_Floating_Both](https://user-images.githubusercontent.com/56278796/230561292-b9bcc015-17fc-4ef5-9a65-2ce8cc69f073.gif) | ![VJoystick_Dynamic_Both](https://user-images.githubusercontent.com/56278796/230561327-3aeb4c1a-f3ee-49e4-84a9-4872f2c261e3.gif) |
 
 # Examples
 - [Mobile](./examples/simple_mobile)
@@ -199,4 +201,5 @@ struct VirtualJoystickBundle {
 
 # TODOs
 - Add more documentation
+- Fix movement of Dynamic joystick
 - Fix size on mobile build (please check this [issue](https://github.com/bevyengine/bevy/issues/8322))
