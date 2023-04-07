@@ -91,18 +91,24 @@ pub struct VirtualJoystickEvent {
 }
 
 impl VirtualJoystickEvent {
+    /// Raw position of point (Mouse or Touch)
     pub fn value(&self) -> Vec2 {
         self.value
     }
 
+    /// Axis of Joystick see [crate::VirtualJoystickAxis]
     pub fn direction(&self) -> VirtualJoystickAxis {
         self.axis.clone()
     }
 
+    /// Delta value ranging from 0 to 1 in each vector (x and y)
     pub fn axis(&self) -> Vec2 {
         self.delta
     }
 
+    /// Delta value snaped
+    /// warn: Still working, not working properly
+    #[warn(incomplete_features)]
     pub fn snap_value(&self) -> Vec2 {
         let x = if self.axis == VirtualJoystickAxis::Both
             || self.axis == VirtualJoystickAxis::Horizontal

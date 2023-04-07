@@ -48,7 +48,7 @@ pub struct VirtualJoystickBundle {
     /// Describes the style including flexbox settings
     pub(crate) style: Style,
     /// The calculated size based on the given image
-    pub calculated_size: CalculatedSize,
+    pub(crate) calculated_size: CalculatedSize,
     /// The tint color of the image
     pub(crate) color: TintColor,
     /// The texture atlas image of the node
@@ -72,9 +72,13 @@ pub struct VirtualJoystickBundle {
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct VirtualJoystickNode {
+    /// Image for background or border image on joystick
     pub border_image: Handle<Image>,
+    /// Image for handler knob on joystick
     pub knob_image: Handle<Image>,
+    /// Size for knob on joystick
     pub knob_size: Vec2,
+    /// Zone to ignore movement
     pub dead_zone: f32,
 }
 
