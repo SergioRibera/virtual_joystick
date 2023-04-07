@@ -35,7 +35,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         },
         ..default()
     })
-    .insert(Player(30.));
+    .insert(Player(50.));
     // Spawn Virtual Joystick at horizontal center
     cmd.spawn(
         VirtualJoystickBundle::new(VirtualJoystickNode {
