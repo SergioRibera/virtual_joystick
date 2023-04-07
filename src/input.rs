@@ -23,22 +23,26 @@ pub fn update_joystick(
     for e in touch_events.iter() {
         for (_node, mut knob) in joysticks.iter_mut() {
             match e.phase {
+                // Start drag
                 TouchPhase::Started => {
-                    if knob.interactable_zone_rect.contains(e.position) {
+                    if knob.interactable_zone_rect.contains(e.position) && knob.id_drag.is_none() {
                         knob.id_drag = Some(e.id);
                         knob.start_pos = e.position;
-                        knob.current_pos = axis.handle(e.position);
                     }
                 }
+                // Dragging
                 TouchPhase::Moved => {
                     if let Some(id) = knob.id_drag {
                         if e.id == id {
-                            j_type.handle(&mut knob, e.position);
-                            knob.current_pos = axis.handle(e.position);
-                            knob.delta = axis.handle(knob.start_pos - e.position);
+                            if *j_type == VirtualJoystickType::Dynamic {
+                                knob.base_pos = pos;
+                            }
+                            knob.current_pos = e.position;
+                            knob.delta = (knob.start_pos - e.position).normalize_or_zero();
                         }
                     }
                 }
+                // End drag
                 TouchPhase::Ended | TouchPhase::Cancelled => {
                     if let Some(id) = knob.id_drag {
                         if e.id == id {
@@ -51,10 +55,11 @@ pub fn update_joystick(
                 }
             }
 
+            // Send event
             if knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone {
                 send_values.send(VirtualJoystickEvent {
-                    value: knob.current_pos,
-                    delta: knob.delta,
+                    value: axis.handle(knob.current_pos),
+                    delta: axis.handle(knob.delta),
                     axis: *axis,
                 });
             }
@@ -77,6 +82,7 @@ pub fn update_joystick_by_mouse(
 ) {
     let window = windows.single();
     for (_node, r_pos, mut knob) in joysticks.iter_mut() {
+        // End drag
         if mouse_button_input.just_released(MouseButton::Left) {
             if let Some(id) = knob.id_drag {
                 if 0 == id {
@@ -90,6 +96,7 @@ pub fn update_joystick_by_mouse(
 
         for e in cursor_evr.iter() {
             let pos = Vec2::new(e.position.x, window.height() - e.position.y);
+            // Start drag
             if mouse_button_input.just_pressed(MouseButton::Left)
                 && knob.id_drag.is_none()
                 && knob.interactable_zone_rect.contains(pos)
@@ -98,6 +105,7 @@ pub fn update_joystick_by_mouse(
                 knob.start_pos = pos;
             }
 
+            // Dragging
             if mouse_button_input.pressed(MouseButton::Left) {
                 if let Some(id) = knob.id_drag {
                     if 0 == id {
@@ -111,6 +119,7 @@ pub fn update_joystick_by_mouse(
             }
         }
 
+        // Send event
         if knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone {
             send_values.send(VirtualJoystickEvent {
                 value: axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
