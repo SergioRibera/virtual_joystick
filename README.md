@@ -7,6 +7,7 @@ Create and use a Virtual Joystick in a UI for [bevy](https://bevyengine.org/) Ga
 Aviable and compatible versions
 
 |  bevy  | VirtualJoystick |
+|--------|-----------------|
 | 0.10.1 |      0.1.0      |
 
 # Features
