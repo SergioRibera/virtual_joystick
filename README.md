@@ -10,11 +10,12 @@ Aviable and compatible versions
 
 |  bevy  | VirtualJoystick |
 |--------|-----------------|
-| 0.10.1 |      0.1.1      |
+| 0.10.1 |      1.0.0      |
 
 # Features
 - Support Mouse and Touch
 - Easy usage
+- Multiple Joysticks on screen
 - Multiple types of joystick behaviour
 - Support Axis block (Horizontal, Vertical or Both)
 
