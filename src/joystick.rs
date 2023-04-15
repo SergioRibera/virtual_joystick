@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use bevy::{
     prelude::*,
     render::Extract,
@@ -42,7 +44,7 @@ impl From<Color> for TintColor {
 pub struct VirtualJoystickInteractionArea;
 
 #[derive(Bundle, Clone, Debug, Default)]
-pub struct VirtualJoystickBundle {
+pub struct VirtualJoystickBundle<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
     /// Describes the size of the node
     pub(crate) node: Node,
     /// Describes the style including flexbox settings
@@ -52,7 +54,7 @@ pub struct VirtualJoystickBundle {
     /// The tint color of the image
     pub(crate) color: TintColor,
     /// The texture atlas image of the node
-    pub(crate) joystick: VirtualJoystickNode,
+    pub(crate) joystick: VirtualJoystickNode<S>,
     /// Whether this node should block interaction with lower nodes
     pub(crate) focus_policy: FocusPolicy,
     /// The transform of the node
@@ -71,7 +73,9 @@ pub struct VirtualJoystickBundle {
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
-pub struct VirtualJoystickNode {
+pub struct VirtualJoystickNode<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
+    /// Identifier of joystick
+    pub id: S,
     /// Image for background or border image on joystick
     pub border_image: Handle<Image>,
     /// Image for handler knob on joystick
@@ -80,6 +84,10 @@ pub struct VirtualJoystickNode {
     pub knob_size: Vec2,
     /// Zone to ignore movement
     pub dead_zone: f32,
+    /// Define Axis for this joystick
+    pub axis: VirtualJoystickAxis,
+    /// Define the behaviour of joystick
+    pub behaviour: VirtualJoystickType,
 }
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
@@ -94,8 +102,8 @@ pub struct VirtualJoystickKnob {
     pub interactable_zone_rect: Rect,
 }
 
-impl VirtualJoystickBundle {
-    pub fn new(joystick: VirtualJoystickNode) -> Self {
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystickBundle<S> {
+    pub fn new(joystick: VirtualJoystickNode<S>) -> Self {
         Self {
             joystick,
             ..default()
@@ -148,7 +156,8 @@ impl VirtualJoystickBundle {
     }
 }
 
-pub fn extract_joystick_node(
+#[allow(clippy::type_complexity)]
+pub fn extract_joystick_node<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
     mut extracted_uinodes: ResMut<ExtractedUiNodes>,
     images: Extract<Res<Assets<Image>>>,
     ui_stack: Extract<Res<UiStack>>,
@@ -157,13 +166,11 @@ pub fn extract_joystick_node(
             &Node,
             &GlobalTransform,
             &TintColor,
-            &VirtualJoystickNode,
+            &VirtualJoystickNode<S>,
             &ComputedVisibility,
             &VirtualJoystickKnob,
         )>,
     >,
-    j_type: Extract<Res<VirtualJoystickType>>,
-    axis: Extract<Res<VirtualJoystickAxis>>,
 ) {
     for (stack_index, entity) in ui_stack.uinodes.iter().enumerate() {
         if let Ok((uinode, global_transform, color, joystick_node, visibility, data)) =
@@ -175,7 +182,7 @@ pub fn extract_joystick_node(
                 || color.0.a() == 0.0
                 || !images.contains(&joystick_node.border_image)
                 || !images.contains(&joystick_node.knob_image)
-                || data.id_drag.is_none() && **j_type == VirtualJoystickType::Dynamic
+                || data.id_drag.is_none() && joystick_node.behaviour == VirtualJoystickType::Dynamic
             {
                 continue;
             }
@@ -184,7 +191,7 @@ pub fn extract_joystick_node(
                 ..default()
             };
 
-            let border_pos = match **j_type {
+            let border_pos = match joystick_node.behaviour {
                 VirtualJoystickType::Fixed => global_transform
                     .compute_matrix()
                     .transform_point3((container_rect.center() - (uinode.size() / 2.)).extend(0.)),
@@ -225,33 +232,35 @@ pub fn extract_joystick_node(
             let x = dist * angle.cos();
             let y = dist * angle.sin();
 
-            let knob_pos = match **j_type {
+            let knob_pos = match joystick_node.behaviour {
                 VirtualJoystickType::Fixed => global_transform.compute_matrix().transform_point3(
-                    (container_rect.center() - (uinode.size() / 2.) - axis.handle_xy(x, y))
-                        .extend(0.),
+                    (container_rect.center()
+                        - (uinode.size() / 2.)
+                        - joystick_node.axis.handle_xy(x, y))
+                    .extend(0.),
                 ),
                 VirtualJoystickType::Floating => {
                     if data.id_drag.is_none() {
                         global_transform.compute_matrix().transform_point3(
-                            (
-                                container_rect.center()
-                                    - (uinode.size() / 2.)
-                                    - axis.handle_xy(x, y)
-                            )
-                                .extend(0.),
+                            (container_rect.center()
+                                - (uinode.size() / 2.)
+                                - joystick_node.axis.handle_xy(x, y))
+                            .extend(0.),
                         )
                     } else {
-                        (data.start_pos - axis.handle_xy(x, y)).extend(0.)
+                        (data.start_pos - joystick_node.axis.handle_xy(x, y)).extend(0.)
                     }
                 }
-                VirtualJoystickType::Dynamic => (data.base_pos - axis.handle_xy(x, y)).extend(0.),
+                VirtualJoystickType::Dynamic => {
+                    (data.base_pos - joystick_node.axis.handle_xy(x, y)).extend(0.)
+                }
             };
 
             extracted_uinodes.uinodes.push(ExtractedUiNode {
+                rect,
                 stack_index,
                 transform: Mat4::from_translation(knob_pos),
                 color: color.0,
-                rect: rect.clone(),
                 image: joystick_node.knob_image.clone(),
                 atlas_size: None,
                 clip: None,
@@ -261,4 +270,3 @@ pub fn extract_joystick_node(
         }
     }
 }
-

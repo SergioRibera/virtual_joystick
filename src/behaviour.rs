@@ -3,9 +3,9 @@ use bevy::prelude::*;
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
 
-#[derive(Resource, Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
-#[cfg_attr(feature = "inspect", reflect(Resource, InspectorOptions))]
+#[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub enum VirtualJoystickAxis {
     #[default]
     Both,
@@ -35,9 +35,9 @@ impl VirtualJoystickAxis {
     }
 }
 
-#[derive(Resource, Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
-#[cfg_attr(feature = "inspect", reflect(Resource, InspectorOptions))]
+#[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub enum VirtualJoystickType {
     /// Static position
     Fixed,

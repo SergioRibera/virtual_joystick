@@ -1,10 +1,10 @@
+use std::{hash::Hash, marker::PhantomData};
+
 use bevy::{
     prelude::*,
     render::RenderApp,
     ui::{RenderUiSystem, UiSystem},
 };
-#[cfg(feature = "inspect")]
-use bevy_inspector_egui::quick::ResourceInspectorPlugin;
 
 mod behaviour;
 mod input;
@@ -19,33 +19,29 @@ pub use joystick::{
 use joystick::{extract_joystick_node, VirtualJoystickKnob};
 
 #[derive(Default)]
-pub struct VirtualJoystickPlugin;
+pub struct VirtualJoystickPlugin<S> {
+    _marker: PhantomData<S>,
+}
 
-impl Plugin for VirtualJoystickPlugin {
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> Plugin
+    for VirtualJoystickPlugin<S>
+{
     fn build(&self, app: &mut bevy::prelude::App) {
-        #[cfg(feature = "inspect")]
-        {
-            app.add_plugin(ResourceInspectorPlugin::<VirtualJoystickAxis>::default())
-                .add_plugin(ResourceInspectorPlugin::<VirtualJoystickType>::default());
-        }
-
         app.register_type::<TintColor>()
             .register_type::<VirtualJoystickInteractionArea>()
-            .register_type::<VirtualJoystickNode>()
+            .register_type::<VirtualJoystickNode<S>>()
             .register_type::<VirtualJoystickKnob>()
             .register_type::<VirtualJoystickAxis>()
             .register_type::<VirtualJoystickType>()
-            .init_resource::<VirtualJoystickAxis>()
-            .init_resource::<VirtualJoystickType>()
-            .add_event::<VirtualJoystickEvent>()
+            .add_event::<VirtualJoystickEvent<S>>()
             .add_systems((
-                update_joystick
+                update_joystick::<S>
                     .run_if(not(run_if_pc))
                     .in_base_set(CoreSet::PreUpdate),
-                update_joystick_by_mouse
+                update_joystick_by_mouse::<S>
                     .run_if(run_if_pc)
                     .in_base_set(CoreSet::PreUpdate),
-                joystick_image_node_system
+                joystick_image_node_system::<S>
                     .before(UiSystem::Flex)
                     .in_base_set(CoreSet::PostUpdate),
             ));
@@ -55,18 +51,18 @@ impl Plugin for VirtualJoystickPlugin {
             Err(_) => return,
         };
         render_app.add_system(
-            extract_joystick_node
+            extract_joystick_node::<S>
                 .after(RenderUiSystem::ExtractNode)
                 .in_schedule(ExtractSchedule),
         );
     }
 }
 
-fn joystick_image_node_system(
+fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
     interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
     mut joystick: Query<(
         &Transform,
-        &VirtualJoystickNode,
+        &VirtualJoystickNode<S>,
         &mut VirtualJoystickKnob,
     )>,
 ) {
@@ -81,13 +77,17 @@ fn joystick_image_node_system(
     }
 }
 
-pub struct VirtualJoystickEvent {
+pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
+    id: S,
     value: Vec2,
     delta: Vec2,
     axis: VirtualJoystickAxis,
 }
 
-impl VirtualJoystickEvent {
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystickEvent<S> {
+    pub fn id(&self) -> S {
+        self.id.clone()
+    }
     /// Raw position of point (Mouse or Touch)
     pub fn value(&self) -> Vec2 {
         self.value
@@ -95,7 +95,7 @@ impl VirtualJoystickEvent {
 
     /// Axis of Joystick see [crate::VirtualJoystickAxis]
     pub fn direction(&self) -> VirtualJoystickAxis {
-        self.axis.clone()
+        self.axis
     }
 
     /// Delta value ranging from 0 to 1 in each vector (x and y)

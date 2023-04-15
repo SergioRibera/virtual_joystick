@@ -1,22 +1,21 @@
+use std::hash::Hash;
+
 use bevy::{input::touch::TouchPhase, prelude::*};
 
 use crate::{
-    joystick::VirtualJoystickKnob, VirtualJoystickAxis, VirtualJoystickEvent, VirtualJoystickNode,
-    VirtualJoystickType,
+    joystick::VirtualJoystickKnob, VirtualJoystickEvent, VirtualJoystickNode, VirtualJoystickType,
 };
 
 pub fn run_if_pc() -> bool {
     !["android", "ios"].contains(&std::env::consts::OS)
 }
 
-pub fn update_joystick(
+pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
     mut touch_events: EventReader<TouchInput>,
-    mut send_values: EventWriter<VirtualJoystickEvent>,
-    mut joysticks: Query<(&VirtualJoystickNode, &mut VirtualJoystickKnob)>,
-    axis: Res<VirtualJoystickAxis>,
-    j_type: Res<VirtualJoystickType>,
+    mut send_values: EventWriter<VirtualJoystickEvent<S>>,
+    mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickKnob)>,
 ) {
-    for (_node, mut knob) in joysticks.iter_mut() {
+    for (node, mut knob) in joysticks.iter_mut() {
         for e in touch_events.iter() {
             let pos = e.position;
             match e.phase {
@@ -33,7 +32,7 @@ pub fn update_joystick(
                 TouchPhase::Moved => {
                     if let Some(id) = knob.id_drag {
                         if e.id == id {
-                            if *j_type == VirtualJoystickType::Dynamic {
+                            if node.behaviour == VirtualJoystickType::Dynamic {
                                 knob.base_pos = pos;
                             }
                             knob.current_pos = pos;
@@ -60,25 +59,24 @@ pub fn update_joystick(
             && knob.id_drag.is_some()
         {
             send_values.send(VirtualJoystickEvent {
-                value: axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
-                delta: axis.handle_xy(-knob.delta.x, knob.delta.y),
-                axis: *axis,
+                id: node.id.clone(),
+                value: node.axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
+                delta: node.axis.handle_xy(-knob.delta.x, knob.delta.y),
+                axis: node.axis,
             });
         }
     }
 }
 
-pub fn update_joystick_by_mouse(
+pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
     mouse_button_input: Res<Input<MouseButton>>,
     mut cursor_evr: EventReader<CursorMoved>,
-    mut send_values: EventWriter<VirtualJoystickEvent>,
-    mut joysticks: Query<(&VirtualJoystickNode, &mut VirtualJoystickKnob)>,
-    axis: Res<VirtualJoystickAxis>,
-    j_type: Res<VirtualJoystickType>,
+    mut send_values: EventWriter<VirtualJoystickEvent<S>>,
+    mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickKnob)>,
     windows: Query<&Window>,
 ) {
     let window = windows.single();
-    for (_node, mut knob) in joysticks.iter_mut() {
+    for (node, mut knob) in joysticks.iter_mut() {
         // End drag
         if mouse_button_input.just_released(MouseButton::Left) {
             if let Some(id) = knob.id_drag {
@@ -106,7 +104,7 @@ pub fn update_joystick_by_mouse(
             if mouse_button_input.pressed(MouseButton::Left) {
                 if let Some(id) = knob.id_drag {
                     if 0 == id {
-                        if *j_type == VirtualJoystickType::Dynamic {
+                        if node.behaviour == VirtualJoystickType::Dynamic {
                             knob.base_pos = pos;
                         }
                         knob.current_pos = pos;
@@ -121,9 +119,10 @@ pub fn update_joystick_by_mouse(
             && knob.id_drag.is_some()
         {
             send_values.send(VirtualJoystickEvent {
-                value: axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
-                delta: axis.handle_xy(-knob.delta.x, knob.delta.y),
-                axis: *axis,
+                id: node.id.clone(),
+                value: node.axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
+                delta: node.axis.handle_xy(-knob.delta.x, knob.delta.y),
+                axis: node.axis,
             });
         }
     }
