@@ -1,7 +1,4 @@
-use bevy::{
-    prelude::*,
-    window::{PrimaryWindow, WindowMode},
-};
+use bevy::{prelude::*, window::WindowMode};
 
 use virtual_joystick::*;
 
@@ -17,7 +14,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(VirtualJoystickPlugin)
+        .add_plugin(VirtualJoystickPlugin::<String>::default())
         .add_startup_system(create_scene)
         .add_system(update_joystick)
         .run();
@@ -27,10 +24,7 @@ fn main() {
 // Player with velocity
 struct Player(pub f32);
 
-fn create_scene(
-    mut cmd: Commands,
-    asset_server: Res<AssetServer>,
-) {
+fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
     cmd.spawn(Camera2dBundle {
         transform: Transform::from_xyz(0., 0., 5.0),
         ..default()
@@ -76,6 +70,9 @@ fn create_scene(
             knob_image: asset_server.load("Knob.png"),
             knob_size: Vec2::new(80., 80.),
             dead_zone: 0.,
+            id: "UniqueJoystick".to_string(),
+            axis: VirtualJoystickAxis::Both,
+            behaviour: VirtualJoystickType::Fixed,
         })
         .set_color(TintColor(Color::WHITE))
         .set_style(Style {
@@ -93,7 +90,7 @@ fn create_scene(
 }
 
 fn update_joystick(
-    mut joystick: EventReader<VirtualJoystickEvent>,
+    mut joystick: EventReader<VirtualJoystickEvent<String>>,
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<FixedTime>,
 ) {
