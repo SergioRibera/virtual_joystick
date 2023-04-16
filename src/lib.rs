@@ -66,12 +66,17 @@ fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect 
         &mut VirtualJoystickKnob,
     )>,
 ) {
-    for (j_pos, data, mut knob) in joystick.iter_mut() {
+    let interaction_area = interaction_area
+        .iter()
+        .map(|(node, _)| node.size())
+        .collect::<Vec<Vec2>>();
+
+    for (i, (j_pos, data, mut knob)) in joystick.iter_mut().enumerate() {
         let j_pos = j_pos.translation.truncate();
-        let Ok((node, _)) = interaction_area.get_single() else {
+        let Some(size) = interaction_area.get(i) else {
             return;
         };
-        let interaction_area = Rect::from_center_size(j_pos, node.size());
+        let interaction_area = Rect::from_center_size(j_pos, *size);
         knob.dead_zone = data.dead_zone;
         knob.interactable_zone_rect = interaction_area;
     }
