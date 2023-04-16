@@ -90,6 +90,7 @@ pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflec
 }
 
 impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystickEvent<S> {
+    /// Get ID of joystick throw event
     pub fn id(&self) -> S {
         self.id.clone()
     }
