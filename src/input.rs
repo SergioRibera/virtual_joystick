@@ -10,6 +10,13 @@ pub fn run_if_pc() -> bool {
     !["android", "ios"].contains(&std::env::consts::OS)
 }
 
+fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
+    if let Some(v) = opt {
+        return cb(v);
+    }
+    false
+}
+
 pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
     mut touch_events: EventReader<TouchInput>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
@@ -18,10 +25,19 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
     for (node, mut knob) in joysticks.iter_mut() {
         for e in touch_events.iter() {
             let pos = e.position;
+
+            println!(
+                "\nRect: {:?}\nOn Zone: {:?}",
+                knob.interactable_zone_rect,
+                knob.interactable_zone_rect.contains(pos)
+            );
             match e.phase {
                 // Start drag
                 TouchPhase::Started => {
-                    if knob.interactable_zone_rect.contains(pos) && knob.id_drag.is_none() {
+                    if knob.interactable_zone_rect.contains(pos) && knob.id_drag.is_none()
+                        || is_some_and(knob.id_drag, |i| i != e.id)
+                            && knob.interactable_zone_rect.contains(pos)
+                    {
                         knob.id_drag = Some(e.id);
                         knob.start_pos = pos;
                         knob.current_pos = pos;
@@ -30,26 +46,22 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
                 }
                 // Dragging
                 TouchPhase::Moved => {
-                    if let Some(id) = knob.id_drag {
-                        if e.id == id {
-                            if node.behaviour == VirtualJoystickType::Dynamic {
-                                knob.base_pos = pos;
-                            }
-                            knob.current_pos = pos;
-                            knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
+                    if is_some_and(knob.id_drag, |i| i == e.id) {
+                        if node.behaviour == VirtualJoystickType::Dynamic {
+                            knob.base_pos = pos;
                         }
+                        knob.current_pos = pos;
+                        knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
                     }
                 }
                 // End drag
                 TouchPhase::Ended | TouchPhase::Cancelled => {
-                    if let Some(id) = knob.id_drag {
-                        if e.id == id {
-                            knob.id_drag = None;
-                            knob.base_pos = Vec2::ZERO;
-                            knob.start_pos = Vec2::ZERO;
-                            knob.current_pos = Vec2::ZERO;
-                            knob.delta = Vec2::ZERO;
-                        }
+                    if is_some_and(knob.id_drag, |i| i == e.id) {
+                        knob.id_drag = None;
+                        knob.base_pos = Vec2::ZERO;
+                        knob.start_pos = Vec2::ZERO;
+                        knob.current_pos = Vec2::ZERO;
+                        knob.delta = Vec2::ZERO;
                     }
                 }
             }
@@ -79,13 +91,11 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
     for (node, mut knob) in joysticks.iter_mut() {
         // End drag
         if mouse_button_input.just_released(MouseButton::Left) {
-            if let Some(id) = knob.id_drag {
-                if 0 == id {
-                    knob.id_drag = None;
-                    knob.start_pos = Vec2::ZERO;
-                    knob.current_pos = Vec2::ZERO;
-                    knob.delta = Vec2::ZERO;
-                }
+            if is_some_and(knob.id_drag, |i| i == 0) {
+                knob.id_drag = None;
+                knob.start_pos = Vec2::ZERO;
+                knob.current_pos = Vec2::ZERO;
+                knob.delta = Vec2::ZERO;
             }
         }
 
@@ -102,14 +112,12 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
 
             // Dragging
             if mouse_button_input.pressed(MouseButton::Left) {
-                if let Some(id) = knob.id_drag {
-                    if 0 == id {
-                        if node.behaviour == VirtualJoystickType::Dynamic {
-                            knob.base_pos = pos;
-                        }
-                        knob.current_pos = pos;
-                        knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
+                if is_some_and(knob.id_drag, |i| i == 0) {
+                    if node.behaviour == VirtualJoystickType::Dynamic {
+                        knob.base_pos = pos;
                     }
+                    knob.current_pos = pos;
+                    knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
                 }
             }
         }
