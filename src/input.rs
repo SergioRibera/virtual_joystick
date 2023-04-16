@@ -22,41 +22,39 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
     mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickKnob)>,
 ) {
-    for (node, mut knob) in joysticks.iter_mut() {
-        for e in touch_events.iter() {
-            let pos = e.position;
+    let touches = touch_events
+        .iter()
+        .map(|e| (e.id, e.phase, e.position))
+        .collect::<Vec<(u64, TouchPhase, Vec2)>>();
 
-            println!(
-                "\nRect: {:?}\nOn Zone: {:?}",
-                knob.interactable_zone_rect,
-                knob.interactable_zone_rect.contains(pos)
-            );
-            match e.phase {
+    for (node, mut knob) in joysticks.iter_mut() {
+        for (id, phase, pos) in &touches {
+            match phase {
                 // Start drag
                 TouchPhase::Started => {
-                    if knob.interactable_zone_rect.contains(pos) && knob.id_drag.is_none()
-                        || is_some_and(knob.id_drag, |i| i != e.id)
-                            && knob.interactable_zone_rect.contains(pos)
+                    if knob.interactable_zone_rect.contains(*pos) && knob.id_drag.is_none()
+                        || is_some_and(knob.id_drag, |i| i != *id)
+                            && knob.interactable_zone_rect.contains(*pos)
                     {
-                        knob.id_drag = Some(e.id);
-                        knob.start_pos = pos;
-                        knob.current_pos = pos;
+                        knob.id_drag = Some(*id);
+                        knob.start_pos = *pos;
+                        knob.current_pos = *pos;
                         knob.delta = Vec2::ZERO;
                     }
                 }
                 // Dragging
                 TouchPhase::Moved => {
-                    if is_some_and(knob.id_drag, |i| i == e.id) {
+                    if is_some_and(knob.id_drag, |i| i == *id) {
                         if node.behaviour == VirtualJoystickType::Dynamic {
-                            knob.base_pos = pos;
+                            knob.base_pos = *pos;
                         }
-                        knob.current_pos = pos;
+                        knob.current_pos = *pos;
                         knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
                     }
                 }
                 // End drag
                 TouchPhase::Ended | TouchPhase::Cancelled => {
-                    if is_some_and(knob.id_drag, |i| i == e.id) {
+                    if is_some_and(knob.id_drag, |i| i == *id) {
                         knob.id_drag = None;
                         knob.base_pos = Vec2::ZERO;
                         knob.start_pos = Vec2::ZERO;
@@ -88,6 +86,11 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
     windows: Query<&Window>,
 ) {
     let window = windows.single();
+    let mouse_positions = cursor_evr
+        .iter()
+        .map(|e| Vec2::new(e.position.x, window.height() - e.position.y))
+        .collect::<Vec<Vec2>>();
+
     for (node, mut knob) in joysticks.iter_mut() {
         // End drag
         if mouse_button_input.just_released(MouseButton::Left) {
@@ -99,24 +102,23 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
             }
         }
 
-        for e in cursor_evr.iter() {
-            let pos = Vec2::new(e.position.x, window.height() - e.position.y);
+        for pos in &mouse_positions {
             // Start drag
             if mouse_button_input.just_pressed(MouseButton::Left)
                 && knob.id_drag.is_none()
-                && knob.interactable_zone_rect.contains(pos)
+                && knob.interactable_zone_rect.contains(*pos)
             {
                 knob.id_drag = Some(0);
-                knob.start_pos = pos;
+                knob.start_pos = *pos;
             }
 
             // Dragging
             if mouse_button_input.pressed(MouseButton::Left) {
                 if is_some_and(knob.id_drag, |i| i == 0) {
                     if node.behaviour == VirtualJoystickType::Dynamic {
-                        knob.base_pos = pos;
+                        knob.base_pos = *pos;
                     }
-                    knob.current_pos = pos;
+                    knob.current_pos = *pos;
                     knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
                 }
             }
