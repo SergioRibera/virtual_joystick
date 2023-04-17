@@ -10,7 +10,7 @@ Aviable and compatible versions
 
 |  bevy  | VirtualJoystick |
 |--------|-----------------|
-| 0.10.1 |      1.0.1      |
+| 0.10.1 |      1.0.2      |
 
 # Features
 - Support Mouse and Touch
