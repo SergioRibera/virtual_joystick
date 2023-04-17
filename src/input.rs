@@ -3,7 +3,8 @@ use std::hash::Hash;
 use bevy::{input::touch::TouchPhase, prelude::*};
 
 use crate::{
-    joystick::VirtualJoystickKnob, VirtualJoystickEvent, VirtualJoystickNode, VirtualJoystickType,
+    joystick::VirtualJoystickKnob, VirtualJoystickEvent, VirtualJoystickEventType,
+    VirtualJoystickNode, VirtualJoystickType,
 };
 
 pub fn run_if_pc() -> bool {
@@ -40,6 +41,13 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
                         knob.start_pos = *pos;
                         knob.current_pos = *pos;
                         knob.delta = Vec2::ZERO;
+                        send_values.send(VirtualJoystickEvent {
+                            id: node.id.clone(),
+                            event: VirtualJoystickEventType::Press,
+                            value: Vec2::ZERO,
+                            delta: Vec2::ZERO,
+                            axis: node.axis,
+                        });
                     }
                 }
                 // Dragging
@@ -62,6 +70,7 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
                         knob.delta = Vec2::ZERO;
                         send_values.send(VirtualJoystickEvent {
                             id: node.id.clone(),
+                            event: VirtualJoystickEventType::Up,
                             value: Vec2::ZERO,
                             delta: Vec2::ZERO,
                             axis: node.axis,
@@ -76,6 +85,7 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
         {
             send_values.send(VirtualJoystickEvent {
                 id: node.id.clone(),
+                event: VirtualJoystickEventType::Drag,
                 value: node.axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
                 delta: node.axis.handle_xy(-knob.delta.x, knob.delta.y),
                 axis: node.axis,
@@ -107,6 +117,7 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
                 knob.delta = Vec2::ZERO;
                 send_values.send(VirtualJoystickEvent {
                     id: node.id.clone(),
+                    event: VirtualJoystickEventType::Up,
                     value: Vec2::ZERO,
                     delta: Vec2::ZERO,
                     axis: node.axis,
@@ -122,6 +133,13 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
             {
                 knob.id_drag = Some(0);
                 knob.start_pos = *pos;
+                send_values.send(VirtualJoystickEvent {
+                    id: node.id.clone(),
+                    event: VirtualJoystickEventType::Press,
+                    value: Vec2::ZERO,
+                    delta: Vec2::ZERO,
+                    axis: node.axis,
+                });
             }
 
             // Dragging
@@ -142,6 +160,7 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
         {
             send_values.send(VirtualJoystickEvent {
                 id: node.id.clone(),
+                event: VirtualJoystickEventType::Drag,
                 value: node.axis.handle_xy(-knob.current_pos.x, knob.current_pos.y),
                 delta: node.axis.handle_xy(-knob.delta.x, knob.delta.y),
                 axis: node.axis,

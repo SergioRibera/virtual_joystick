@@ -33,6 +33,7 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> Plugin
             .register_type::<VirtualJoystickKnob>()
             .register_type::<VirtualJoystickAxis>()
             .register_type::<VirtualJoystickType>()
+            .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_systems((
                 update_joystick::<S>
@@ -82,8 +83,17 @@ fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect 
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
+#[reflect]
+pub enum VirtualJoystickEventType {
+    Press,
+    Drag,
+    Up
+}
+
 pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
     id: S,
+    event: VirtualJoystickEventType,
     value: Vec2,
     delta: Vec2,
     axis: VirtualJoystickAxis,
@@ -107,6 +117,10 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystic
     /// Delta value ranging from 0 to 1 in each vector (x and y)
     pub fn axis(&self) -> Vec2 {
         self.delta
+    }
+
+    pub fn get_type(&self) -> VirtualJoystickEventType {
+        self.event
     }
 
     /// Delta value snaped
