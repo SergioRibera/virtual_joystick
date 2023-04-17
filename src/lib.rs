@@ -124,15 +124,16 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystic
     }
 
     /// Delta value snaped
-    /// warn: Still working, not working properly
-    #[warn(incomplete_features)]
-    pub fn snap_value(&self) -> Vec2 {
+    /// the dead_zone is required for make more customizable
+    /// the default of the dead_zone is 0.9
+    pub fn snap_axis(&self, dead_zone: Option<f32>) -> Vec2 {
+        let dead_zone = dead_zone.unwrap_or(0.9);
         let x = if self.axis == VirtualJoystickAxis::Both
             || self.axis == VirtualJoystickAxis::Horizontal
         {
-            if self.delta.x > 0. {
+            if self.delta.x > dead_zone {
                 1.
-            } else if self.delta.x < 0. {
+            } else if self.delta.x < -dead_zone {
                 -1.
             } else {
                 0.
@@ -143,9 +144,9 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystic
         let y = if self.axis == VirtualJoystickAxis::Both
             || self.axis == VirtualJoystickAxis::Vertical
         {
-            if self.delta.y > 0. {
+            if self.delta.y > dead_zone {
                 1.
-            } else if self.delta.y < 0. {
+            } else if self.delta.y < -dead_zone {
                 -1.
             } else {
                 0.
