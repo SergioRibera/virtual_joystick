@@ -17,6 +17,7 @@ Aviable and compatible versions
 - Easy usage
 - Multiple Joysticks on screen
 - Multiple types of joystick behaviour
+- Track events on Joystick (Press, Drag and Up)
 - Support Axis block (Horizontal, Vertical or Both)
 
 ### Axis
@@ -187,12 +188,21 @@ struct VirtualJoystickNode {
     pub behaviour: VirtualJoystickType,
 }
 
+// Event Type
+pub enum VirtualJoystickEventType {
+    Press,
+    Drag,
+    Up
+}
+
 // EventReader
 struct VirtualJoystickEvent {
     /// Get ID of joystick throw event
-    pub fn id(&self) -> S {
-        self.id.clone()
-    }
+    pub fn id(&self) -> S;
+
+    /// Return the Type of Joystick Event
+    pub fn get_type(&self) -> VirtualJoystickEventType;
+
     /// Raw position of point (Mouse or Touch)
     pub fn value(&self) -> Vec2;
 
@@ -203,8 +213,7 @@ struct VirtualJoystickEvent {
     pub fn axis(&self) -> Vec2;
 
     /// Delta value snaped
-    /// warn: Still working, not working properly
-    pub fn snap_value(&self) -> Vec2;
+    pub fn snap_axis(&self) -> Vec2;
 }
 
 // Bundle to spawn

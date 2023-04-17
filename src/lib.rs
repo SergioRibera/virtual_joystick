@@ -119,6 +119,7 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystic
         self.delta
     }
 
+    /// Return the Type of Joystick Event
     pub fn get_type(&self) -> VirtualJoystickEventType {
         self.event
     }
