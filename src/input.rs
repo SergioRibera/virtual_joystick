@@ -60,12 +60,18 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
                         knob.start_pos = Vec2::ZERO;
                         knob.current_pos = Vec2::ZERO;
                         knob.delta = Vec2::ZERO;
+                        send_values.send(VirtualJoystickEvent {
+                            id: node.id.clone(),
+                            value: Vec2::ZERO,
+                            delta: Vec2::ZERO,
+                            axis: node.axis,
+                        });
                     }
                 }
             }
         }
         // Send event
-        if (knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone)
+        if (knob.delta.x.abs() >= knob.dead_zone || knob.delta.y.abs() >= knob.dead_zone)
             && knob.id_drag.is_some()
         {
             send_values.send(VirtualJoystickEvent {
@@ -99,6 +105,12 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
                 knob.start_pos = Vec2::ZERO;
                 knob.current_pos = Vec2::ZERO;
                 knob.delta = Vec2::ZERO;
+                send_values.send(VirtualJoystickEvent {
+                    id: node.id.clone(),
+                    value: Vec2::ZERO,
+                    delta: Vec2::ZERO,
+                    axis: node.axis,
+                });
             }
         }
 
@@ -125,7 +137,7 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
         }
 
         // Send event
-        if (knob.delta.x.abs() > knob.dead_zone || knob.delta.y.abs() > knob.dead_zone)
+        if (knob.delta.x.abs() >= knob.dead_zone || knob.delta.y.abs() >= knob.dead_zone)
             && knob.id_drag.is_some()
         {
             send_values.send(VirtualJoystickEvent {
