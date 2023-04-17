@@ -34,6 +34,7 @@ Aviable and compatible versions
 - [Mobile](./examples/simple_mobile)
 - [Desktop](./examples/simple_pc)
 - [Multiple Joysticks](./examples/multiple_joysticks_mobile)
+- [Multiple Joysticks Desktop](./examples/multiple_joysticks_pc)
 
 # Usage
 Check out the [examples](./examples) for details.
