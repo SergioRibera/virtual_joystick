@@ -57,7 +57,13 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
                             knob.base_pos = *pos;
                         }
                         knob.current_pos = *pos;
-                        knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
+                        // knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
+                        let half = knob.interactable_zone_rect.half_size();
+                        let d = (knob.start_pos - knob.current_pos) / half;
+                        knob.delta = Vec2::new(
+                            d.x.signum() * d.x.abs().min(1.),
+                            d.y.signum() * d.y.abs().min(1.),
+                        );
                     }
                 }
                 // End drag
@@ -149,7 +155,13 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
                         knob.base_pos = *pos;
                     }
                     knob.current_pos = *pos;
-                    knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
+                    // knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
+                    let half = knob.interactable_zone_rect.half_size();
+                    let d = (knob.start_pos - knob.current_pos) / half;
+                    knob.delta = Vec2::new(
+                        d.x.signum() * d.x.abs().min(1.),
+                        d.y.signum() * d.y.abs().min(1.),
+                    );
                 }
             }
         }
