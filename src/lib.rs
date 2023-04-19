@@ -88,7 +88,7 @@ fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect 
 pub enum VirtualJoystickEventType {
     Press,
     Drag,
-    Up
+    Up,
 }
 
 pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
