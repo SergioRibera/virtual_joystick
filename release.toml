@@ -1,0 +1,17 @@
+allow-branch = ["main"]
+sign-commit = true
+sign-tag = true
+push-remote = "origin"
+release = true
+publish = true
+verify = true
+push = true
+pre-release-commit-message = "chore: Release {{crate_name}} version {{version}}"
+pre-release-replacements = [
+    { file = "README.md", search = "\\|      [0-9\\.-]+      \\|", replace = "|      {{version}}      |" },
+]
+tag-message = "chore: Release {{crate_name}} version {{version}}"
+tag-name = "{{version}}"
+tag = true
+dependent-version = "upgrade"
+metadata = "optional"
