@@ -1,0 +1,58 @@
+[tasks.ignore-members]
+workspace = false
+
+[tasks.default]
+alias = "check"
+
+[tasks.clean]
+description = "Clean all target directory"
+command = "cargo"
+args = ["clean"]
+
+[tasks.fmt]
+description = "Check format quality"
+command = "cargo"
+args = ["fmt", "--all", "--", "--check"]
+
+[tasks.fix-fmt]
+description = "Fix format"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.clippy]
+description = "Check code quality"
+command = "cargo"
+args = ["clippy", "--", "-D", "warnings"]
+
+[tasks.fix-clippy]
+description = "Fix code quality"
+command = "cargo"
+args = ["fix", "--allow-dirty"]
+
+[tasks.test]
+description = "Check all unit test"
+command = "cargo"
+args = ["test"]
+dependencies = ["fmt", "clippy"]
+
+[tasks.check]
+description = "Check all issues, format and code quality"
+dependencies = ["fmt", "clippy", "test"]
+
+[tasks.fix-all]
+description = "Try fix all clippy and format issues"
+dependencies = ["fix-fmt", "fix-clippy"]
+
+# Improve performance compile times
+# mold
+# mold -run cargo run
+# RUST_LOG=info,castle=debug cargo watch -c -d 0.1 -s 'mold -run cargo run'
+[tasks.dev]
+description = "Run binary/lib as dev"
+script = "cargo watch -c -d 0.1 -s 'mold -run cargo run'"
+
+[tasks.build]
+description = "Generate release binary/lib"
+dependencies = ["fmt", "clippy", "test"]
+command = "cargo"
+args = ["build", "--release"]
