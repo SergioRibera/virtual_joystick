@@ -115,20 +115,20 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
 
     for (node, mut knob) in joysticks.iter_mut() {
         // End drag
-        if mouse_button_input.just_released(MouseButton::Left) {
-            if is_some_and(knob.id_drag, |i| i == 0) {
-                knob.id_drag = None;
-                knob.start_pos = Vec2::ZERO;
-                knob.current_pos = Vec2::ZERO;
-                knob.delta = Vec2::ZERO;
-                send_values.send(VirtualJoystickEvent {
-                    id: node.id.clone(),
-                    event: VirtualJoystickEventType::Up,
-                    value: Vec2::ZERO,
-                    delta: Vec2::ZERO,
-                    axis: node.axis,
-                });
-            }
+        if mouse_button_input.just_released(MouseButton::Left)
+            && is_some_and(knob.id_drag, |i| i == 0)
+        {
+            knob.id_drag = None;
+            knob.start_pos = Vec2::ZERO;
+            knob.current_pos = Vec2::ZERO;
+            knob.delta = Vec2::ZERO;
+            send_values.send(VirtualJoystickEvent {
+                id: node.id.clone(),
+                event: VirtualJoystickEventType::Up,
+                value: Vec2::ZERO,
+                delta: Vec2::ZERO,
+                axis: node.axis,
+            });
         }
 
         for pos in &mouse_positions {
@@ -149,20 +149,19 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
             }
 
             // Dragging
-            if mouse_button_input.pressed(MouseButton::Left) {
-                if is_some_and(knob.id_drag, |i| i == 0) {
-                    if node.behaviour == VirtualJoystickType::Dynamic {
-                        knob.base_pos = *pos;
-                    }
-                    knob.current_pos = *pos;
-                    // knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
-                    let half = knob.interactable_zone_rect.half_size();
-                    let d = (knob.start_pos - knob.current_pos) / half;
-                    knob.delta = Vec2::new(
-                        d.x.signum() * d.x.abs().min(1.),
-                        d.y.signum() * d.y.abs().min(1.),
-                    );
+            if mouse_button_input.pressed(MouseButton::Left)
+                && is_some_and(knob.id_drag, |i| i == 0)
+            {
+                if node.behaviour == VirtualJoystickType::Dynamic {
+                    knob.base_pos = *pos;
                 }
+                knob.current_pos = *pos;
+                let half = knob.interactable_zone_rect.half_size();
+                let d = (knob.start_pos - knob.current_pos) / half;
+                knob.delta = Vec2::new(
+                    d.x.signum() * d.x.abs().min(1.),
+                    d.y.signum() * d.y.abs().min(1.),
+                );
             }
         }
 
