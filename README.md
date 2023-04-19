@@ -199,22 +199,22 @@ pub enum VirtualJoystickEventType {
 // EventReader
 struct VirtualJoystickEvent {
     /// Get ID of joystick throw event
-    pub fn id(&self) -> S;
+    pub fn id() -> S;
 
     /// Return the Type of Joystick Event
-    pub fn get_type(&self) -> VirtualJoystickEventType;
+    pub fn get_type() -> VirtualJoystickEventType;
 
     /// Raw position of point (Mouse or Touch)
-    pub fn value(&self) -> Vec2;
+    pub fn value() -> Vec2;
 
     /// Axis of Joystick see [crate::VirtualJoystickAxis]
-    pub fn direction(&self) -> VirtualJoystickAxis;
+    pub fn direction() -> VirtualJoystickAxis;
 
     /// Delta value ranging from 0 to 1 in each vector (x and y)
-    pub fn axis(&self) -> Vec2;
+    pub fn axis() -> Vec2;
 
     /// Delta value snaped
-    pub fn snap_axis(&self) -> Vec2;
+    pub fn snap_axis(dead_zone: Option<f32>) -> Vec2;
 }
 
 // Bundle to spawn
