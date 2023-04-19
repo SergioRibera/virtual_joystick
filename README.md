@@ -1,7 +1,11 @@
 # Bevy Virtual Joystick
 ![VJoystick_Fixed_Preview](https://user-images.githubusercontent.com/56278796/230562577-e173e567-5b61-402e-929d-3d3172b0da83.gif)
 
-[![Crates.io](https://img.shields.io/crates/v/virtual_joystick)](https://crates.io/crates/virtual_joystick)
+</br>
+<p align="center">
+    <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/SergioRibera/virtual_joystick/ci.yml?label=ci&style=flat-square">
+    <a href="https://crates.io/crates/virtual_joystick"><img alt="GitHub release (latest by date)" src="https://img.shields.io/crates/v/virtual_joystick"></a>
+</p>
 
 Create and use a Virtual Joystick in a UI for [bevy](https://bevyengine.org/) Game Engine.
 
