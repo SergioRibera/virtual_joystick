@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "Makefile.toml"
+      - "README.md"
+      - "examples/***"
+
+jobs:
+  # Run cargo clippy -- -D warnings
+  clippy_check:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
+      - uses: dsherret/rust-toolchain-file@v1
+      - name: Run clippy
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          args: -- -D warnings
+          command: clippy
+
+  # Run cargo fmt --all -- --check
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+      - uses: dsherret/rust-toolchain-file@v1
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1.0.1
+        with:
+          args: --all -- --check
+          command: fmt
