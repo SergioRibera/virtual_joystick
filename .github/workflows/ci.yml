@@ -11,6 +11,7 @@ on:
     paths-ignore:
       - "Makefile.toml"
       - "README.md"
+      - "release.toml"
       - "examples/**"
 
 jobs:
