@@ -126,9 +126,9 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystic
 
     /// Delta value snaped
     /// the dead_zone is required for make more customizable
-    /// the default of the dead_zone is 0.9
+    /// the default of the dead_zone is 0.5
     pub fn snap_axis(&self, dead_zone: Option<f32>) -> Vec2 {
-        let dead_zone = dead_zone.unwrap_or(0.9);
+        let dead_zone = dead_zone.unwrap_or(0.5);
         let x = if self.axis == VirtualJoystickAxis::Both
             || self.axis == VirtualJoystickAxis::Horizontal
         {
