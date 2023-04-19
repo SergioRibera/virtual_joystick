@@ -11,7 +11,7 @@ on:
     paths-ignore:
       - "Makefile.toml"
       - "README.md"
-      - "examples/***"
+      - "examples/**"
 
 jobs:
   # Run cargo clippy -- -D warnings
