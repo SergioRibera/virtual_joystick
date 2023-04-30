@@ -2,9 +2,12 @@ use bevy::prelude::*;
 
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Deserialize};
 
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub enum VirtualJoystickAxis {
     #[default]
@@ -37,6 +40,7 @@ impl VirtualJoystickAxis {
 
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub enum VirtualJoystickType {
     /// Static position

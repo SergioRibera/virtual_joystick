@@ -40,6 +40,18 @@ Aviable and compatible versions
 - [Multiple Joysticks](./examples/multiple_joysticks_mobile)
 - [Multiple Joysticks Desktop](./examples/multiple_joysticks_pc)
 
+# Features
+- inspect: for world inspect with egui inspector
+- serialize (default): for serialization support for all types (usable for save and load settings)
+
+```toml
+virtual_joystick = {
+    version = "*",
+    default-features = false,
+    features = [ "inspect", "serialize" ]
+}
+```
+
 # Usage
 Check out the [examples](./examples) for details.
 
