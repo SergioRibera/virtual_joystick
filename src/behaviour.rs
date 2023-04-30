@@ -3,7 +3,7 @@ use bevy::prelude::*;
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
 #[cfg(feature = "serialize")]
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
