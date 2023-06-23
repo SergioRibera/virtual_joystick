@@ -53,12 +53,18 @@ pub fn update_joystick<S: Hash + Sync + Send + Clone + Default + Reflect + 'stat
                 // Dragging
                 TouchPhase::Moved => {
                     if is_some_and(knob.id_drag, |i| i == *id) {
+                        knob.current_pos = *pos;
+                        let half = knob.interactable_zone_rect.half_size();
                         if node.behaviour == VirtualJoystickType::Dynamic {
                             knob.base_pos = *pos;
+                            let to_knob = knob.current_pos - knob.start_pos;
+                            let distance_to_knob = to_knob.length();
+                            if distance_to_knob > half.x {
+                                let excess_distance = distance_to_knob - half.x;
+                                knob.start_pos += to_knob.normalize() * excess_distance;
+                            }
                         }
-                        knob.current_pos = *pos;
                         // knob.delta = (knob.start_pos - knob.current_pos).normalize_or_zero();
-                        let half = knob.interactable_zone_rect.half_size();
                         let d = (knob.start_pos - knob.current_pos) / half;
                         knob.delta = Vec2::new(
                             d.x.signum() * d.x.abs().min(1.),
@@ -152,11 +158,17 @@ pub fn update_joystick_by_mouse<S: Hash + Sync + Send + Clone + Default + Reflec
             if mouse_button_input.pressed(MouseButton::Left)
                 && is_some_and(knob.id_drag, |i| i == 0)
             {
-                if node.behaviour == VirtualJoystickType::Dynamic {
-                    knob.base_pos = *pos;
-                }
                 knob.current_pos = *pos;
                 let half = knob.interactable_zone_rect.half_size();
+                if node.behaviour == VirtualJoystickType::Dynamic {
+                    knob.base_pos = *pos;
+                    let to_knob = knob.current_pos - knob.start_pos;
+                    let distance_to_knob = to_knob.length();
+                    if distance_to_knob > half.x {
+                        let excess_distance = distance_to_knob - half.x;
+                        knob.start_pos += to_knob.normalize() * excess_distance;
+                    }
+                }
                 let d = (knob.start_pos - knob.current_pos) / half;
                 knob.delta = Vec2::new(
                     d.x.signum() * d.x.abs().min(1.),
