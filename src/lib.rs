@@ -11,7 +11,7 @@ mod input;
 mod joystick;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
-use input::{run_if_pc, update_joystick, update_joystick_by_mouse};
+use input::{run_if_pc, update_input, update_joystick, update_joystick_by_mouse, InputEvent};
 pub use joystick::{
     TintColor, VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
 };
@@ -35,13 +35,15 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> Plugin
             .register_type::<VirtualJoystickType>()
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
+            .add_event::<InputEvent>()
             .add_systems((
-                update_joystick::<S>
+                update_joystick
                     .run_if(not(run_if_pc))
                     .in_base_set(CoreSet::PreUpdate),
-                update_joystick_by_mouse::<S>
+                update_joystick_by_mouse
                     .run_if(run_if_pc)
                     .in_base_set(CoreSet::PreUpdate),
+                update_input::<S>.in_base_set(CoreSet::PreUpdate),
                 joystick_image_node_system::<S>
                     .before(UiSystem::Flex)
                     .in_base_set(CoreSet::PostUpdate),
