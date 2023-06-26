@@ -66,7 +66,7 @@ virtual_joystick = "*" # Add your version
 To solve [sizing issue](#user-content-issues)
 ```
 [patch.crates-io]
-android-activity = { git = "https://github.com/MarijnS95/android-activity/", branch = "na-resize"}
+android-activity = { git = "https://github.com/rust-mobile/android-activity", rev = "79e03e08fbf70e374cb88d8ef8c89acaa006bbfc" }
 ```
 
 The minimal requirement:
@@ -264,7 +264,7 @@ struct VirtualJoystickBundle {
     > **Note**: Temporary solution, add this to your Cargo.toml
     ```rs
     [patch.crates-io]
-    android-activity = { git = "https://github.com/MarijnS95/android-activity/", branch = "na-resize"}
+    android-activity = { git = "https://github.com/rust-mobile/android-activity", rev = "79e03e08fbf70e374cb88d8ef8c89acaa006bbfc" }
     ```
 
 # TODOs
