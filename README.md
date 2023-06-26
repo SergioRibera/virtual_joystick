@@ -24,6 +24,8 @@ Aviable and compatible versions
 - Track events on Joystick (Press, Drag and Up)
 - Support Axis block (Horizontal, Vertical or Both)
 
+> **NOTE:** To compile android projects you can use [cargo-apk](https://crates.io/crates/cargo-apk) or the [docker-rust-android](https://github.com/SergioRibera/docker-rust-android) project container where you don't have to install or prepare any sdk, for more details see the readme of the mobile projects
+
 ### Axis
 | Both (Default)                                                                                                                 | Horizontal                                                                                                                           | Vertical                                                                                                                           |
 |--------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
@@ -37,7 +39,7 @@ Aviable and compatible versions
 # Examples
 - [Mobile](./examples/simple_mobile)
 - [Desktop](./examples/simple_pc)
-- [Multiple Joysticks](./examples/multiple_joysticks_mobile)
+- [Multiple Joysticks Mobile](./examples/multiple_joysticks_mobile)
 - [Multiple Joysticks Desktop](./examples/multiple_joysticks_pc)
 
 # Features
@@ -266,5 +268,4 @@ struct VirtualJoystickBundle {
     ```
 
 # TODOs
-- Add more documentation
-- Fix movement of Dynamic joystick
+- Add more better documentation

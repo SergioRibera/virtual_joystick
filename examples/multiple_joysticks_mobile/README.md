@@ -8,10 +8,23 @@ This show how works on android
 # Features
 - Multiple joysticks
 - Fixed Joystick
+- Orientation based on sensor
 
 > **NOTE:** The color in area is only for make it visible
 
 # Run example
 ```sh
 cargo apk run
+```
+Or use this [proyect](https://github.com/SergioRibera/docker-rust-android) for compile gradle proyect
+
+> **NOTE:** This is the best option to have full control over the android part of the game, and it is also very useful because of the easy integration by making pipelines in github action
+
+```sh
+# on root of proyect
+docker run --rm -it -v "$(pwd)/:/src" -w /src/examples/multiple_joysticks_mobile/android sergioribera/rust-android:170-sdk-33 assembleDebug
+# make own
+sudo chown -R $USER examples/multiple_joysticks_mobile/android/build/
+# and install
+adb install examples/multiple_joysticks_mobile/android/build/outputs/apk/debug/android-debug.apk
 ```
