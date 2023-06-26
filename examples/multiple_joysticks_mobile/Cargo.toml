@@ -29,4 +29,4 @@ label = "Multiple Joystick"
 # Important: this solve the [issue](https://github.com/bevyengine/bevy/issues/8322)
 #
 [patch.crates-io]
-android-activity = { git = "https://github.com/MarijnS95/android-activity/", branch = "na-resize" }
+android-activity = { git = "https://github.com/rust-mobile/android-activity", rev = "79e03e08fbf70e374cb88d8ef8c89acaa006bbfc" }

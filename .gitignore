@@ -1,2 +1,5 @@
+examples/***/android/gradle
+examples/***/android/build
+examples/***/android/.gradle
 ***/target
 /Cargo.lock
