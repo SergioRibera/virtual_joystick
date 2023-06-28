@@ -91,6 +91,11 @@ cargo {
         // "x86_64"
     ]
     targetDirectory = "../target"
+    if (project.gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }) {
+        profile = "release"
+    } else {
+        profile = "debug"
+    }
 }
 
 //
@@ -102,11 +107,6 @@ cargo {
 import org.apache.tools.ant.taskdefs.condition.Os
 
 tasks.whenTaskAdded { task ->
-    if (task.name == 'assembleDebug' || task.name == 'bundleDebug') {
-        cargo.profile = "debug"
-    } else if (task.name == 'assembleRelease' || task.name == 'bundleRelease') {
-        cargo.profile = "release"
-    }
     if (task.name == 'mergeDebugJniLibFolders' || task.name == 'mergeReleaseJniLibFolders') {
         task.dependsOn 'cargoBuild'
     }
