@@ -130,8 +130,9 @@ dependencies = [
 
 [[package]]
 name = "android-activity"
-version = "0.4.1"
-source = "git+https://github.com/rust-mobile/android-activity?rev=79e03e08fbf70e374cb88d8ef8c89acaa006bbfc#79e03e08fbf70e374cb88d8ef8c89acaa006bbfc"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40bc1575e653f158cbdc6ebcd917b9564e66321c5325c232c3591269c257be69"
 dependencies = [
  "android-properties",
  "bitflags",
@@ -2959,7 +2960,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "virtual_joystick"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "bevy",
  "serde",

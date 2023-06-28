@@ -63,11 +63,6 @@ Add to Cargo.toml
 bevy = "0.10.1"
 virtual_joystick = "*" # Add your version
 ```
-To solve [sizing issue](#user-content-issues)
-```
-[patch.crates-io]
-android-activity = { git = "https://github.com/rust-mobile/android-activity", rev = "79e03e08fbf70e374cb88d8ef8c89acaa006bbfc" }
-```
 
 The minimal requirement:
 ```rust
@@ -258,14 +253,6 @@ struct VirtualJoystickBundle {
     pub fn set_z_index(mut self, z_index: ZIndex) -> Self;
 }
 ```
-
-# Issues
-- [Sizing problem between desktop and mobile (UI/2D)](https://github.com/bevyengine/bevy/issues/8322)
-    > **Note**: Temporary solution, add this to your Cargo.toml
-    ```rs
-    [patch.crates-io]
-    android-activity = { git = "https://github.com/rust-mobile/android-activity", rev = "79e03e08fbf70e374cb88d8ef8c89acaa006bbfc" }
-    ```
 
 # TODOs
 - Add more better documentation

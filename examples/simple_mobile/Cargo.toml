@@ -10,23 +10,3 @@ crate-type = ["staticlib", "cdylib"]
 [dependencies]
 bevy = "0.10.1"
 virtual_joystick = { path = "../../" }
-
-[package.metadata.android]
-package = "com.sergioribera.simple"
-apk_name = "Simple_Joystick"
-assets = "./assets"
-resources = "./assets/android-res"
-build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
-
-[package.metadata.android.sdk]
-target_sdk_version = 31
-
-[package.metadata.android.application]
-icon = "@mipmap/ic_launcher"
-label = "Simple Joystick"
-
-#
-# Important: this solve the [issue](https://github.com/bevyengine/bevy/issues/8322)
-#
-[patch.crates-io]
-android-activity = { git = "https://github.com/rust-mobile/android-activity", rev = "79e03e08fbf70e374cb88d8ef8c89acaa006bbfc" }
