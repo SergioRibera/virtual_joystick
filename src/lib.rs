@@ -43,7 +43,7 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> Plugin
                 update_joystick_by_mouse
                     .run_if(run_if_pc)
                     .in_base_set(CoreSet::PreUpdate),
-                update_input::<S>.in_base_set(CoreSet::PreUpdate),
+                update_input::<S>.in_base_set(CoreSet::PreUpdateFlush),
                 joystick_image_node_system::<S>
                     .before(UiSystem::Flex)
                     .in_base_set(CoreSet::PostUpdate),
