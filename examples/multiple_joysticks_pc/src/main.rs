@@ -55,7 +55,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             axis: VirtualJoystickAxis::Horizontal,
             behaviour: VirtualJoystickType::Fixed,
         })
-        .set_color(TintColor(Color::WHITE))
+        .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
             size: Size::all(Val::Px(150.)),
             position_type: PositionType::Absolute,
@@ -81,7 +81,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             axis: VirtualJoystickAxis::Vertical,
             behaviour: VirtualJoystickType::Fixed,
         })
-        .set_color(TintColor(Color::WHITE))
+        .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
             size: Size::all(Val::Px(150.)),
             position_type: PositionType::Absolute,
@@ -99,6 +99,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 
 fn update_joystick(
     mut joystick: EventReader<VirtualJoystickEvent<JoystickController>>,
+    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<JoystickController>)>,
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<FixedTime>,
 ) {
@@ -106,6 +107,23 @@ fn update_joystick(
 
     for j in joystick.iter() {
         let Vec2 { x, y } = j.snap_axis(None);
+
+        match j.get_type() {
+            VirtualJoystickEventType::Press | VirtualJoystickEventType::Drag => {
+                for (mut color, node) in joystick_color.iter_mut() {
+                    if node.id == j.id() {
+                        *color = TintColor(Color::WHITE);
+                    }
+                }
+            }
+            VirtualJoystickEventType::Up => {
+                for (mut color, node) in joystick_color.iter_mut() {
+                    if node.id == j.id() {
+                        *color = TintColor(Color::WHITE.with_a(0.2));
+                    }
+                }
+            }
+        }
 
         match j.id() {
             JoystickController::MovementX => {

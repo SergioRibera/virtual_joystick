@@ -74,7 +74,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             axis: VirtualJoystickAxis::Both,
             behaviour: VirtualJoystickType::Fixed,
         })
-        .set_color(TintColor(Color::WHITE))
+        .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
             size: Size::all(Val::Px(150.)),
             position_type: PositionType::Absolute,
@@ -91,6 +91,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 
 fn update_joystick(
     mut joystick: EventReader<VirtualJoystickEvent<String>>,
+    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<JoystickController>)>,
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<FixedTime>,
 ) {
@@ -98,6 +99,21 @@ fn update_joystick(
 
     for j in joystick.iter() {
         let Vec2 { x, y } = j.axis();
+        match j.get_type() {
+            VirtualJoystickEventType::Press | VirtualJoystickEventType::Drag => {
+                let (mut color, node) = joystick_color.single_mut();
+                if node.id == j.id() {
+                    *color = TintColor(Color::WHITE);
+                }
+            }
+            VirtualJoystickEventType::Up => {
+                let (mut color, node) = joystick_color.single_mut();
+                if node.id == j.id() {
+                    *color = TintColor(Color::WHITE.with_a(0.2));
+                }
+            }
+        }
+
         player.translation.x += x * player_data.0 * time_step.period.as_secs_f32();
         player.translation.y += y * player_data.0 * time_step.period.as_secs_f32();
     }

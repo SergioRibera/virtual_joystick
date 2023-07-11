@@ -2960,7 +2960,7 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "virtual_joystick"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "bevy",
  "serde",
