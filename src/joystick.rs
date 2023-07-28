@@ -3,7 +3,7 @@ use std::hash::Hash;
 use bevy::{
     prelude::*,
     render::Extract,
-    ui::{ExtractedUiNode, ExtractedUiNodes, FocusPolicy, RelativeCursorPosition, UiStack},
+    ui::{ExtractedUiNode, ExtractedUiNodes, FocusPolicy, RelativeCursorPosition, UiStack, widget::UiImageSize, ContentSize},
 };
 
 #[cfg(feature = "inspect")]
@@ -43,14 +43,14 @@ impl From<Color> for TintColor {
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub struct VirtualJoystickInteractionArea;
 
-#[derive(Bundle, Clone, Debug, Default)]
-pub struct VirtualJoystickBundle<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
+#[derive(Bundle, Debug, Default)]
+pub struct VirtualJoystickBundle<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static> {
     /// Describes the size of the node
     pub(crate) node: Node,
     /// Describes the style including flexbox settings
     pub(crate) style: Style,
     /// The calculated size based on the given image
-    pub(crate) calculated_size: CalculatedSize,
+    pub(crate) calculated_size: ContentSize,
     /// The tint color of the image
     pub(crate) color: TintColor,
     /// The texture atlas image of the node
@@ -73,7 +73,7 @@ pub struct VirtualJoystickBundle<S: Hash + Sync + Send + Clone + Default + Refle
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
-pub struct VirtualJoystickNode<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
+pub struct VirtualJoystickNode<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static> {
     /// Identifier of joystick
     pub id: S,
     /// Image for background or border image on joystick
@@ -102,7 +102,7 @@ pub struct VirtualJoystickKnob {
     pub interactable_zone_rect: Rect,
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystickBundle<S> {
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static> VirtualJoystickBundle<S> {
     pub fn new(joystick: VirtualJoystickNode<S>) -> Self {
         Self {
             joystick,
@@ -157,7 +157,7 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystic
 }
 
 #[allow(clippy::type_complexity)]
-pub fn extract_joystick_node<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
+pub fn extract_joystick_node<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static>(
     mut extracted_uinodes: ResMut<ExtractedUiNodes>,
     images: Extract<Res<Assets<Image>>>,
     ui_stack: Extract<Res<UiStack>>,

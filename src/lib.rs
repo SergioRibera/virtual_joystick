@@ -3,7 +3,7 @@ use std::{hash::Hash, marker::PhantomData};
 use bevy::{
     prelude::*,
     render::RenderApp,
-    ui::{RenderUiSystem, UiSystem},
+    ui::{RenderUiSystem, UiSystem}, reflect::TypePath,
 };
 
 mod behaviour;
@@ -23,7 +23,7 @@ pub struct VirtualJoystickPlugin<S> {
     _marker: PhantomData<S>,
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> Plugin
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static> Plugin
     for VirtualJoystickPlugin<S>
 {
     fn build(&self, app: &mut bevy::prelude::App) {
@@ -36,32 +36,34 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> Plugin
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
-            .add_systems((
-                update_joystick
-                    .run_if(not(run_if_pc))
-                    .in_base_set(CoreSet::PreUpdate),
-                update_joystick_by_mouse
-                    .run_if(run_if_pc)
-                    .in_base_set(CoreSet::PreUpdate),
-                update_input::<S>.in_base_set(CoreSet::PreUpdateFlush),
-                joystick_image_node_system::<S>
-                    .before(UiSystem::Flex)
-                    .in_base_set(CoreSet::PostUpdate),
-            ));
+            .add_systems(
+                PreUpdate,
+                update_joystick.before(update_input::<S>).run_if(not(run_if_pc))
+            )
+            .add_systems(
+                PreUpdate,
+                update_joystick_by_mouse.before(update_input::<S>).run_if(run_if_pc))
+            .add_systems(
+                PreUpdate,
+                update_input::<S>
+            )
+            .add_systems(
+                PostUpdate,
+                joystick_image_node_system::<S>.before(UiSystem::Layout)
+            );
 
         let render_app = match app.get_sub_app_mut(RenderApp) {
             Ok(render_app) => render_app,
             Err(_) => return,
         };
-        render_app.add_system(
-            extract_joystick_node::<S>
-                .after(RenderUiSystem::ExtractNode)
-                .in_schedule(ExtractSchedule),
+        render_app.add_systems(
+            ExtractSchedule,
+            extract_joystick_node::<S>.after(RenderUiSystem::ExtractNode),
         );
     }
 }
 
-fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
+fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static>(
     interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
     mut joystick: Query<(
         &Transform,
@@ -93,7 +95,8 @@ pub enum VirtualJoystickEventType {
     Up,
 }
 
-pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> {
+#[derive(Event)]
+pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflect + 'static + TypePath> {
     id: S,
     event: VirtualJoystickEventType,
     value: Vec2,
@@ -101,7 +104,7 @@ pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflec
     axis: VirtualJoystickAxis,
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + 'static> VirtualJoystickEvent<S> {
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + 'static> VirtualJoystickEvent<S> {
     /// Get ID of joystick throw event
     pub fn id(&self) -> S {
         self.id.clone()

@@ -1,12 +1,13 @@
 use std::hash::Hash;
 
-use bevy::{input::touch::TouchPhase, prelude::*};
+use bevy::{input::{touch::TouchPhase, mouse::MouseButtonInput, ButtonState}, prelude::*, reflect::TypePath, window::PrimaryWindow};
 
 use crate::{
     joystick::VirtualJoystickKnob, VirtualJoystickEvent, VirtualJoystickEventType,
     VirtualJoystickNode, VirtualJoystickType,
 };
 
+#[derive(Event)]
 pub enum InputEvent {
     StartDrag { id: u64, pos: Vec2 },
     Dragging { id: u64, pos: Vec2 },
@@ -24,7 +25,7 @@ fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
     false
 }
 
-pub fn update_input<S: Hash + Sync + Send + Clone + Default + Reflect + 'static>(
+pub fn update_input<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static>(
     mut input_events: EventReader<InputEvent>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
     mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickKnob)>,
@@ -128,7 +129,7 @@ pub fn update_joystick(
                 send_values.send(InputEvent::Dragging { id: *id, pos: *pos });
             }
             // End drag
-            TouchPhase::Ended | TouchPhase::Cancelled => {
+            TouchPhase::Ended | TouchPhase::Canceled => {
                 send_values.send(InputEvent::EndDrag { id: *id, pos: *pos });
             }
         }
@@ -137,33 +138,33 @@ pub fn update_joystick(
 
 pub fn update_joystick_by_mouse(
     mouse_button_input: Res<Input<MouseButton>>,
-    mut cursor_evr: EventReader<CursorMoved>,
+    mut mousebtn_evr: EventReader<MouseButtonInput>,
     mut send_values: EventWriter<InputEvent>,
-    windows: Query<&Window>,
+    windows: Query<&Window, With<PrimaryWindow>>,
 ) {
     let window = windows.single();
-    let mouse_positions = cursor_evr
-        .iter()
-        .map(|e| Vec2::new(e.position.x, window.height() - e.position.y))
-        .collect::<Vec<Vec2>>();
+    let pos = window.cursor_position().unwrap_or(Vec2::ZERO);
 
-    // End drag
-    if mouse_button_input.just_released(MouseButton::Left) {
-        send_values.send(InputEvent::EndDrag {
-            id: 0,
-            pos: Vec2::ZERO,
-        });
+    for mousebtn in mousebtn_evr.iter() {
+        // End drag
+        if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Released {
+            send_values.send(InputEvent::EndDrag {
+                id: 0,
+                pos: pos,
+            });
+        }
+
+        // Start drag
+        if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Pressed {
+            send_values.send(InputEvent::StartDrag {
+                id: 0,
+                pos: pos,
+            });
+        }
     }
 
-    for pos in &mouse_positions {
-        // Start drag
-        if mouse_button_input.just_pressed(MouseButton::Left) {
-            send_values.send(InputEvent::StartDrag { id: 0, pos: *pos });
-        }
-
-        // Dragging
-        if mouse_button_input.pressed(MouseButton::Left) {
-            send_values.send(InputEvent::Dragging { id: 0, pos: *pos });
-        }
+    // Dragging
+    if mouse_button_input.pressed(MouseButton::Left) {
+        send_values.send(InputEvent::Dragging { id: 0, pos: pos });
     }
 }
