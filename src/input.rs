@@ -1,6 +1,11 @@
 use std::hash::Hash;
 
-use bevy::{input::{touch::TouchPhase, mouse::MouseButtonInput, ButtonState}, prelude::*, reflect::TypePath, window::PrimaryWindow};
+use bevy::{
+    input::{mouse::MouseButtonInput, touch::TouchPhase, ButtonState},
+    prelude::*,
+    reflect::TypePath,
+    window::PrimaryWindow,
+};
 
 use crate::{
     joystick::VirtualJoystickKnob, VirtualJoystickEvent, VirtualJoystickEventType,
@@ -25,7 +30,9 @@ fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
     false
 }
 
-pub fn update_input<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static>(
+pub fn update_input<
+    S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static,
+>(
     mut input_events: EventReader<InputEvent>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
     mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickKnob)>,
@@ -148,23 +155,17 @@ pub fn update_joystick_by_mouse(
     for mousebtn in mousebtn_evr.iter() {
         // End drag
         if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Released {
-            send_values.send(InputEvent::EndDrag {
-                id: 0,
-                pos: pos,
-            });
+            send_values.send(InputEvent::EndDrag { id: 0, pos });
         }
 
         // Start drag
         if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Pressed {
-            send_values.send(InputEvent::StartDrag {
-                id: 0,
-                pos: pos,
-            });
+            send_values.send(InputEvent::StartDrag { id: 0, pos });
         }
     }
 
     // Dragging
     if mouse_button_input.pressed(MouseButton::Left) {
-        send_values.send(InputEvent::Dragging { id: 0, pos: pos });
+        send_values.send(InputEvent::Dragging { id: 0, pos });
     }
 }

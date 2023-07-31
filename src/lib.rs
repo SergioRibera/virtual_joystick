@@ -2,8 +2,9 @@ use std::{hash::Hash, marker::PhantomData};
 
 use bevy::{
     prelude::*,
+    reflect::TypePath,
     render::RenderApp,
-    ui::{RenderUiSystem, UiSystem}, reflect::TypePath,
+    ui::{RenderUiSystem, UiSystem},
 };
 
 mod behaviour;
@@ -38,18 +39,20 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect 
             .add_event::<InputEvent>()
             .add_systems(
                 PreUpdate,
-                update_joystick.before(update_input::<S>).run_if(not(run_if_pc))
+                update_joystick
+                    .before(update_input::<S>)
+                    .run_if(not(run_if_pc)),
             )
             .add_systems(
                 PreUpdate,
-                update_joystick_by_mouse.before(update_input::<S>).run_if(run_if_pc))
-            .add_systems(
-                PreUpdate,
-                update_input::<S>
+                update_joystick_by_mouse
+                    .before(update_input::<S>)
+                    .run_if(run_if_pc),
             )
+            .add_systems(PreUpdate, update_input::<S>)
             .add_systems(
                 PostUpdate,
-                joystick_image_node_system::<S>.before(UiSystem::Layout)
+                joystick_image_node_system::<S>.before(UiSystem::Layout),
             );
 
         let render_app = match app.get_sub_app_mut(RenderApp) {
@@ -63,7 +66,9 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect 
     }
 }
 
-fn joystick_image_node_system<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static>(
+fn joystick_image_node_system<
+    S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static,
+>(
     interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
     mut joystick: Query<(
         &Transform,
@@ -96,7 +101,9 @@ pub enum VirtualJoystickEventType {
 }
 
 #[derive(Event)]
-pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflect + 'static + TypePath> {
+pub struct VirtualJoystickEvent<
+    S: Hash + Sync + Send + Clone + Default + Reflect + 'static + TypePath,
+> {
     id: S,
     event: VirtualJoystickEventType,
     value: Vec2,
@@ -104,7 +111,9 @@ pub struct VirtualJoystickEvent<S: Hash + Sync + Send + Clone + Default + Reflec
     axis: VirtualJoystickAxis,
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + 'static> VirtualJoystickEvent<S> {
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + 'static>
+    VirtualJoystickEvent<S>
+{
     /// Get ID of joystick throw event
     pub fn id(&self) -> S {
         self.id.clone()
