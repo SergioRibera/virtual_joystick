@@ -22,9 +22,9 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(VirtualJoystickPlugin::<JoystickController>::default())
-        .add_startup_system(create_scene)
-        .add_system(update_joystick)
+        .add_plugins(VirtualJoystickPlugin::<JoystickController>::default())
+        .add_systems(Startup, create_scene)
+        .add_systems(Update, update_joystick)
         .run();
 }
 
@@ -64,13 +64,11 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         })
         .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
-            size: Size::all(Val::Px(150.)),
+            width: Val::Px(150.),
+            height: Val::Px(150.),
             position_type: PositionType::Absolute,
-            position: UiRect {
-                left: Val::Px(35.),
-                bottom: Val::Percent(15.),
-                ..default()
-            },
+            left: Val::Px(35.),
+            bottom: Val::Percent(15.),
             ..default()
         }),
     )
@@ -90,13 +88,11 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         })
         .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
-            size: Size::all(Val::Px(150.)),
+            width: Val::Px(150.),
+            height: Val::Px(150.),
             position_type: PositionType::Absolute,
-            position: UiRect {
-                right: Val::Px(35.),
-                bottom: Val::Percent(15.),
-                ..default()
-            },
+            right: Val::Px(35.),
+            bottom: Val::Percent(15.),
             ..default()
         }),
     )

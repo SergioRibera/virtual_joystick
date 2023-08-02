@@ -18,6 +18,6 @@ inspect = ["bevy-inspector-egui"]
 serialize = ["serde"]
 
 [dependencies]
-bevy = { version = "0.10.1" }
-bevy-inspector-egui = { version = "0.18", optional = true }
+bevy = { version = "0.11" }
+bevy-inspector-egui = { version = "0.19", optional = true }
 serde = { version = "^1", features = ["derive"], optional = true }

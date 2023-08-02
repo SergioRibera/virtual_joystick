@@ -8,5 +8,5 @@ name = "simple"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-bevy = "0.10.1"
+bevy = "0.11.0"
 virtual_joystick = { path = "../../" }
