@@ -14,9 +14,9 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(VirtualJoystickPlugin::<String>::default())
-        .add_startup_system(create_scene)
-        .add_system(update_joystick)
+        .add_plugins(VirtualJoystickPlugin::<String>::default())
+        .add_systems(Startup, create_scene)
+        .add_systems(Update, update_joystick)
         .run();
 }
 
@@ -47,16 +47,11 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
     cmd.spawn(NodeBundle {
         background_color: BackgroundColor(Color::ORANGE_RED.with_a(0.15)),
         style: Style {
-            size: Size {
-                width: Val::Percent(100.),
-                height: Val::Percent(50.),
-            },
+            width: Val::Percent(100.),
+            height: Val::Percent(50.),
             position_type: PositionType::Absolute,
-            position: UiRect {
-                left: Val::Px(0.),
-                bottom: Val::Px(0.),
-                ..default()
-            },
+            left: Val::Px(0.),
+            bottom: Val::Px(0.),
             ..default()
         },
         ..default()
@@ -76,14 +71,12 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         })
         .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
-            size: Size::all(Val::Px(150.)),
+            width: Val::Px(150.),
+            height: Val::Px(150.),
             position_type: PositionType::Absolute,
-            position: UiRect {
-                // Center X position
-                left: Val::Percent(35.),
-                bottom: Val::Percent(15.),
-                ..default()
-            },
+            // Center X position
+            left: Val::Percent(35.),
+            bottom: Val::Percent(15.),
             ..default()
         }),
     );
@@ -91,7 +84,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 
 fn update_joystick(
     mut joystick: EventReader<VirtualJoystickEvent<String>>,
-    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<JoystickController>)>,
+    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<String>)>,
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<FixedTime>,
 ) {

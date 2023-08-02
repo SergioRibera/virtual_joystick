@@ -6,10 +6,10 @@ use virtual_joystick::*;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(WorldInspectorPlugin::new())
-        .add_plugin(VirtualJoystickPlugin::<String>::default())
-        .add_startup_system(create_scene)
-        .add_system(update_joystick)
+        .add_plugins(WorldInspectorPlugin::new())
+        .add_plugins(VirtualJoystickPlugin::<String>::default())
+        .add_systems(Startup, create_scene)
+        .add_systems(Update, update_joystick)
         .run();
 }
 
@@ -49,13 +49,11 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         })
         .set_color(TintColor(Color::WHITE.with_a(0.2)))
         .set_style(Style {
-            size: Size::all(Val::Px(150.)),
+            width: Val::Px(150.),
+            height: Val::Px(150.),
             position_type: PositionType::Absolute,
-            position: UiRect {
-                left: Val::Percent(50.),
-                bottom: Val::Percent(15.),
-                ..default()
-            },
+            left: Val::Percent(50.),
+            bottom: Val::Percent(15.),
             ..default()
         }),
     )
@@ -65,7 +63,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 
 fn update_joystick(
     mut joystick: EventReader<VirtualJoystickEvent<String>>,
-    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<JoystickController>)>,
+    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<String>)>,
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<FixedTime>,
 ) {
