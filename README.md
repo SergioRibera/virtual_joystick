@@ -38,9 +38,9 @@ Aviable and compatible versions
 
 # Examples
 - [Mobile](./examples/simple_mobile)
-- [Desktop](./examples/simple_pc)
+- [Desktop](./examples/simple.rs)
 - [Multiple Joysticks Mobile](./examples/multiple_joysticks_mobile)
-- [Multiple Joysticks Desktop](./examples/multiple_joysticks_pc)
+- [Multiple Joysticks Desktop](./examples/multiple.rs)
 
 # Features
 - inspect: for world inspect with egui inspector
@@ -56,6 +56,11 @@ virtual_joystick = {
 
 # Usage
 Check out the [examples](./examples) for details.
+
+```sh
+# to run example
+cargo run --example simple -F=inspect
+```
 
 Add to Cargo.toml
 ```toml

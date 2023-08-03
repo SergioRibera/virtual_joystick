@@ -12,6 +12,14 @@ readme = "README.md"
 repository = "https://github.com/SergioRibera/virtual_joystick"
 rust-version = "1.67.0"
 
+[[example]]
+name = "simple"
+required-features = ["inspect"]
+
+[[example]]
+name = "multiple"
+required-features = ["inspect"]
+
 [features]
 default = ["serialize"]
 inspect = ["bevy-inspector-egui"]
