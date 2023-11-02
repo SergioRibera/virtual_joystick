@@ -44,14 +44,14 @@ Aviable and compatible versions
 - [Multiple Joysticks Desktop](./examples/multiple.rs)
 
 # Features
-- inspect: for world inspect with egui inspector
+
 - serialize (default): for serialization support for all types (usable for save and load settings)
 
 ```toml
 virtual_joystick = {
     version = "*",
     default-features = false,
-    features = [ "inspect", "serialize" ]
+    features = [ "serialize" ]
 }
 ```
 
@@ -60,7 +60,7 @@ Check out the [examples](./examples) for details.
 
 ```sh
 # to run example
-cargo run --example simple -F=inspect
+cargo run --example simple
 ```
 
 Add to Cargo.toml

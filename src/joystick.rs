@@ -9,9 +9,6 @@ use bevy::{
     },
 };
 
-#[cfg(feature = "inspect")]
-use bevy_inspector_egui::prelude::*;
-
 use crate::{VirtualJoystickAxis, VirtualJoystickType};
 
 /// The tint color of the image
@@ -20,8 +17,6 @@ use crate::{VirtualJoystickAxis, VirtualJoystickType};
 /// respecting transparent areas.
 #[derive(Component, Copy, Clone, Debug, Reflect)]
 #[reflect(Component, Default)]
-#[cfg_attr(feature = "inspect", derive(InspectorOptions))]
-#[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub struct TintColor(pub Color);
 
 impl TintColor {
@@ -42,8 +37,6 @@ impl From<Color> for TintColor {
 
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
-#[cfg_attr(feature = "inspect", derive(InspectorOptions))]
-#[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub struct VirtualJoystickInteractionArea;
 
 #[derive(Bundle, Debug, Default)]
