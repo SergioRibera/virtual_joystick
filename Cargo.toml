@@ -14,15 +14,12 @@ rust-version = "1.67.0"
 
 [[example]]
 name = "simple"
-required-features = ["inspect"]
 
 [[example]]
 name = "multiple"
-required-features = ["inspect"]
 
 [features]
 default = ["serialize"]
-inspect = ["bevy-inspector-egui"]
 serialize = ["serde"]
 
 [dependencies]
@@ -30,8 +27,8 @@ bevy = { version = "0.11", default-features = false, features = [
     "bevy_render",
     "bevy_ui"
 ] }
-bevy-inspector-egui = { version = "0.19", optional = true }
 serde = { version = "^1", features = ["derive"], optional = true }
 
 [dev-dependencies]
 bevy = "0.11"
+bevy-inspector-egui = "0.20"
