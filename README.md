@@ -45,13 +45,13 @@ Aviable and compatible versions
 
 # Features
 
-- serialize (default): for serialization support for all types (usable for save and load settings)
+- `serde` (default): for serialization support for all types through [`serde`](https://serde.rs) (useful for save and load settings)
 
 ```toml
 virtual_joystick = {
     version = "*",
     default-features = false,
-    features = [ "serialize" ]
+    features = [ "serde" ]
 }
 ```
 

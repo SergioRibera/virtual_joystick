@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
-#[cfg(feature = "serialize")]
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum VirtualJoystickAxis {
     #[default]
     Both,
@@ -35,7 +35,7 @@ impl VirtualJoystickAxis {
 }
 
 #[derive(Reflect, Clone, Copy, Debug, Default, PartialEq, Eq)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum VirtualJoystickType {
     /// Static position
     Fixed,
