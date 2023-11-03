@@ -45,13 +45,13 @@ Aviable and compatible versions
 
 # Features
 - inspect: for world inspect with egui inspector
-- serialize (default): for serialization support for all types (usable for save and load settings)
+- serde (default): for serialization support for all types (usable for save and load settings)
 
 ```toml
 virtual_joystick = {
     version = "*",
     default-features = false,
-    features = [ "inspect", "serialize" ]
+    features = [ "inspect", "serde" ]
 }
 ```
 
@@ -66,7 +66,7 @@ cargo run --example simple -F=inspect
 Add to Cargo.toml
 ```toml
 [dependencies]
-bevy = "0.10.1"
+bevy = "0.11"
 virtual_joystick = "*" # Add your version
 ```
 

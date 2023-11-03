@@ -21,9 +21,9 @@ name = "multiple"
 required-features = ["inspect"]
 
 [features]
-default = ["serialize"]
+default = ["serde"]
 inspect = ["bevy-inspector-egui"]
-serialize = ["serde"]
+serde = ["dep:serde"]
 
 [dependencies]
 bevy = { version = "0.11", default-features = false, features = [
