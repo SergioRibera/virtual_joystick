@@ -45,7 +45,7 @@ Aviable and compatible versions
 
 # Features
 - inspect: for world inspect with egui inspector
-- serde (default): for serialization support for all types (usable for save and load settings)
+- [`serde`](https://serde.rs) (default): for serialization support for all types (usable for save and load settings)
 
 ```toml
 virtual_joystick = {
