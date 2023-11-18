@@ -108,8 +108,8 @@ pub fn create_joystick<I: VirtualJoystickID>(
     joystick_node: VirtualJoystickNode<I>,
     joystick_node_style: Style,
 ) {
-    let mut spawn = cmd
-        .spawn(VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style));
+    let mut spawn =
+        cmd.spawn(VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style));
     let spawn = spawn
         .insert(VirtualJoystickInteractionArea)
         .with_children(|parent| {

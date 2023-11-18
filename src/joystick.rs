@@ -153,12 +153,9 @@ pub fn extract_joystick_node<S: VirtualJoystickID>(
             let pos = -data.delta * radius;
             let knob_pos = base_pos + joystick_node.axis.handle_vec3(pos.extend(0.));
 
-            extracted_uinodes
-                .uinodes
-                .entry(entity)
-                .and_modify(|node| {
-                    node.transform = Mat4::from_translation(knob_pos);
-                });
+            extracted_uinodes.uinodes.entry(entity).and_modify(|node| {
+                node.transform = Mat4::from_translation(knob_pos);
+            });
         }
     }
 
@@ -183,12 +180,9 @@ pub fn extract_joystick_node<S: VirtualJoystickID>(
                 continue;
             }
             let pos = get_base_pos(uinode, joystick_node.behaviour, data, global_transform);
-            extracted_uinodes
-                .uinodes
-                .entry(entity)
-                .and_modify(|node| {
-                    node.transform = Mat4::from_translation(pos);
-                });
+            extracted_uinodes.uinodes.entry(entity).and_modify(|node| {
+                node.transform = Mat4::from_translation(pos);
+            });
         }
     }
 }
