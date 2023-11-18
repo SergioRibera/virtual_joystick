@@ -22,6 +22,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         transform: Transform::from_xyz(0., 0., 5.0),
         ..default()
     });
+    // Fake Player
     cmd.spawn(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0., 0., 0.),
@@ -36,57 +37,44 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         ..default()
     })
     .insert(Player(50.));
-    // Spawn Virtual Joystick at horizontal center
-    cmd.spawn(
-        VirtualJoystickBundle::new(VirtualJoystickNode {
-            border_image: asset_server.load("Outline.png"),
-            knob_image: asset_server.load("Knob.png"),
-            knob_size: Vec2::new(80., 80.),
+
+    // Spawn Virtual Joystick at horizontal center using helper function
+    create_joystick(
+        &mut cmd,
+        asset_server.load("Knob.png"),
+        asset_server.load("Outline.png"),
+        None,
+        None,
+        Some(Color::ORANGE_RED.with_a(0.3)),
+        Vec2::new(75., 75.),
+        Vec2::new(150., 150.),
+        VirtualJoystickNode {
             dead_zone: 0.,
             id: "UniqueJoystick".to_string(),
             axis: VirtualJoystickAxis::Both,
             behaviour: VirtualJoystickType::Floating,
-        })
-        .set_color(TintColor(Color::WHITE.with_a(0.2)))
-        .set_style(Style {
+        },
+        Style {
             width: Val::Px(150.),
             height: Val::Px(150.),
             position_type: PositionType::Absolute,
             left: Val::Percent(50.),
             bottom: Val::Percent(15.),
             ..default()
-        }),
-    )
-    .insert(BackgroundColor(Color::ORANGE_RED.with_a(0.3)))
-    .insert(VirtualJoystickInteractionArea);
+        },
+    );
 }
 
 fn update_joystick(
     mut joystick: EventReader<VirtualJoystickEvent<String>>,
-    mut joystick_color: Query<(&mut TintColor, &VirtualJoystickNode<String>)>,
     mut player: Query<(&mut Transform, &Player)>,
-    time_step: Res<FixedTime>,
+    time_step: Res<Time>,
 ) {
     let (mut player, player_data) = player.single_mut();
 
-    for j in joystick.iter() {
+    for j in joystick.read() {
         let Vec2 { x, y } = j.axis();
-        match j.get_type() {
-            VirtualJoystickEventType::Press | VirtualJoystickEventType::Drag => {
-                let (mut color, node) = joystick_color.single_mut();
-                if node.id == j.id() {
-                    *color = TintColor(Color::WHITE);
-                }
-            }
-            VirtualJoystickEventType::Up => {
-                let (mut color, node) = joystick_color.single_mut();
-                if node.id == j.id() {
-                    *color = TintColor(Color::WHITE.with_a(0.2));
-                }
-            }
-        }
-
-        player.translation.x += x * player_data.0 * time_step.period.as_secs_f32();
-        player.translation.y += y * player_data.0 * time_step.period.as_secs_f32();
+        player.translation.x += x * player_data.0 * time_step.delta_seconds();
+        player.translation.y += y * player_data.0 * time_step.delta_seconds();
     }
 }
