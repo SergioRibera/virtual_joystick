@@ -6,8 +6,8 @@ use bevy::{
 
 use crate::VirtualJoystickID;
 use crate::{
-    joystick::VirtualJoystickData, VirtualJoystickEvent, VirtualJoystickEventType,
-    VirtualJoystickNode, VirtualJoystickType,
+    ui::VirtualJoystickData, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickNode,
+    VirtualJoystickType,
 };
 
 #[derive(Event)]
