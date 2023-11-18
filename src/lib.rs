@@ -14,24 +14,32 @@ mod joystick;
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
 use input::{run_if_pc, update_input, update_joystick, update_joystick_by_mouse, InputEvent};
 pub use joystick::{
-    TintColor, VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
+    VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
+    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 
-use joystick::{extract_joystick_node, VirtualJoystickKnob};
+use joystick::{extract_joystick_node, VirtualJoystickData};
 
 #[derive(Default)]
 pub struct VirtualJoystickPlugin<S> {
     _marker: PhantomData<S>,
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static> Plugin
-    for VirtualJoystickPlugin<S>
+pub trait VirtualJoystickID:
+    Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static
 {
+}
+
+impl<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + TypePath + 'static>
+    VirtualJoystickID for S
+{
+}
+
+impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.register_type::<TintColor>()
-            .register_type::<VirtualJoystickInteractionArea>()
+        app.register_type::<VirtualJoystickInteractionArea>()
             .register_type::<VirtualJoystickNode<S>>()
-            .register_type::<VirtualJoystickKnob>()
+            .register_type::<VirtualJoystickData>()
             .register_type::<VirtualJoystickAxis>()
             .register_type::<VirtualJoystickType>()
             .register_type::<VirtualJoystickEventType>()
@@ -55,10 +63,7 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect 
                 joystick_image_node_system::<S>.before(UiSystem::Layout),
             );
 
-        let render_app = match app.get_sub_app_mut(RenderApp) {
-            Ok(render_app) => render_app,
-            Err(_) => return,
-        };
+        let Ok(render_app) = app.get_sub_app_mut(RenderApp) else { return; };
         render_app.add_systems(
             ExtractSchedule,
             extract_joystick_node::<S>.after(RenderUiSystem::ExtractNode),
@@ -66,14 +71,12 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect 
     }
 }
 
-fn joystick_image_node_system<
-    S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + 'static,
->(
+fn joystick_image_node_system<S: VirtualJoystickID>(
     interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
     mut joystick: Query<(
         &Transform,
         &VirtualJoystickNode<S>,
-        &mut VirtualJoystickKnob,
+        &mut VirtualJoystickData,
     )>,
 ) {
     let interaction_area = interaction_area
@@ -100,10 +103,8 @@ pub enum VirtualJoystickEventType {
     Up,
 }
 
-#[derive(Event)]
-pub struct VirtualJoystickEvent<
-    S: Hash + Sync + Send + Clone + Default + Reflect + 'static + TypePath,
-> {
+#[derive(Event, Debug)]
+pub struct VirtualJoystickEvent<S: VirtualJoystickID> {
     id: S,
     event: VirtualJoystickEventType,
     value: Vec2,
@@ -111,9 +112,7 @@ pub struct VirtualJoystickEvent<
     axis: VirtualJoystickAxis,
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + 'static>
-    VirtualJoystickEvent<S>
-{
+impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
     /// Get ID of joystick throw event
     pub fn id(&self) -> S {
         self.id.clone()

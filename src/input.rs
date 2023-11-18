@@ -1,14 +1,12 @@
-use std::hash::Hash;
-
 use bevy::{
     input::{mouse::MouseButtonInput, touch::TouchPhase, ButtonState},
     prelude::*,
-    reflect::TypePath,
     window::PrimaryWindow,
 };
 
+use crate::VirtualJoystickID;
 use crate::{
-    joystick::VirtualJoystickKnob, VirtualJoystickEvent, VirtualJoystickEventType,
+    joystick::VirtualJoystickData, VirtualJoystickEvent, VirtualJoystickEventType,
     VirtualJoystickNode, VirtualJoystickType,
 };
 
@@ -30,14 +28,12 @@ fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
     false
 }
 
-pub fn update_input<
-    S: Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static,
->(
+pub fn update_input<S: VirtualJoystickID>(
     mut input_events: EventReader<InputEvent>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
-    mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickKnob)>,
+    mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickData)>,
 ) {
-    let input_events = input_events.iter().collect::<Vec<&InputEvent>>();
+    let input_events = input_events.read().collect::<Vec<&InputEvent>>();
 
     for (node, mut knob) in joysticks.iter_mut() {
         for event in &input_events {
@@ -121,7 +117,7 @@ pub fn update_joystick(
     mut send_values: EventWriter<InputEvent>,
 ) {
     let touches = touch_events
-        .iter()
+        .read()
         .map(|e| (e.id, e.phase, e.position))
         .collect::<Vec<(u64, TouchPhase, Vec2)>>();
 
@@ -152,7 +148,7 @@ pub fn update_joystick_by_mouse(
     let window = windows.single();
     let pos = window.cursor_position().unwrap_or(Vec2::ZERO);
 
-    for mousebtn in mousebtn_evr.iter() {
+    for mousebtn in mousebtn_evr.read() {
         // End drag
         if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Released {
             send_values.send(InputEvent::EndDrag { id: 0, pos });
