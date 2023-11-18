@@ -96,6 +96,7 @@ use crate::{
 ///     ));
 /// });
 /// ```
+#[allow(clippy::too_many_arguments)]
 pub fn create_joystick<I: VirtualJoystickID>(
     cmd: &mut Commands,
     knob_img: Handle<Image>,

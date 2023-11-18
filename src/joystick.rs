@@ -198,7 +198,7 @@ fn get_base_pos(
         ..default()
     };
 
-    let border_pos = match behaviour {
+    match behaviour {
         VirtualJoystickType::Fixed => global_transform
             .compute_matrix()
             .transform_point3((container_rect.center() - (uinode.size() / 2.)).extend(0.)),
@@ -212,7 +212,5 @@ fn get_base_pos(
             }
         }
         VirtualJoystickType::Dynamic => joystick.base_pos.extend(0.),
-    };
-
-    border_pos
+    }
 }
