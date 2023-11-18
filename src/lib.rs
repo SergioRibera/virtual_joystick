@@ -10,6 +10,7 @@ use bevy::{
 mod behaviour;
 mod input;
 mod joystick;
+mod utils;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
 use input::{run_if_pc, update_input, update_joystick, update_joystick_by_mouse, InputEvent};
@@ -17,6 +18,7 @@ pub use joystick::{
     VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
     VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
+pub use utils::create_joystick;
 
 use joystick::{extract_joystick_node, VirtualJoystickData};
 
