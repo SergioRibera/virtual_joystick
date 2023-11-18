@@ -31,11 +31,22 @@ fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
 pub fn update_input<S: VirtualJoystickID>(
     mut input_events: EventReader<InputEvent>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
-    mut joysticks: Query<(&VirtualJoystickNode<S>, &mut VirtualJoystickData)>,
+    mut joysticks: Query<(
+        &VirtualJoystickNode<S>,
+        &Visibility,
+        &InheritedVisibility,
+        &ViewVisibility,
+        &mut VirtualJoystickData,
+    )>,
 ) {
     let input_events = input_events.read().collect::<Vec<&InputEvent>>();
 
-    for (node, mut knob) in joysticks.iter_mut() {
+    for (node, visibility, inherited_visibility, view_visibility, mut knob) in joysticks.iter_mut()
+    {
+        if visibility == Visibility::Hidden || !inherited_visibility.get() || !view_visibility.get()
+        {
+            continue;
+        }
         for event in &input_events {
             match event {
                 InputEvent::StartDrag { id, pos } => {
