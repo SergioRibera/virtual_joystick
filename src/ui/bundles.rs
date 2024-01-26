@@ -70,6 +70,10 @@ pub struct VirtualJoystickData {
     pub current_pos: Vec2,
     pub delta: Vec2,
     pub interactable_zone_rect: Rect,
+    /// None means no current interaction<br/>
+    /// Some(false) means current interaction is touch<br/>
+    /// Some(true) means current interaction is mouse
+    pub current_iteraction_is_mouse: Option<bool>,
 }
 
 impl<S: VirtualJoystickID> VirtualJoystickBundle<S> {

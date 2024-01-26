@@ -12,13 +12,9 @@ use crate::{
 
 #[derive(Event)]
 pub enum InputEvent {
-    StartDrag { id: u64, pos: Vec2 },
-    Dragging { id: u64, pos: Vec2 },
-    EndDrag { id: u64, pos: Vec2 },
-}
-
-pub fn run_if_pc() -> bool {
-    !["android", "ios"].contains(&std::env::consts::OS)
+    StartDrag { id: u64, pos: Vec2, is_mouse: bool },
+    Dragging { id: u64, pos: Vec2, is_mouse: bool },
+    EndDrag { id: u64, pos: Vec2, is_mouse: bool },
 }
 
 fn is_some_and<T>(opt: Option<T>, cb: impl FnOnce(T) -> bool) -> bool {
@@ -49,7 +45,12 @@ pub fn update_input<S: VirtualJoystickID>(
         }
         for event in &input_events {
             match event {
-                InputEvent::StartDrag { id, pos } => {
+                InputEvent::StartDrag { id, pos, is_mouse } => {
+                    if let Some(current_iteraction_is_mouse) = &knob.current_iteraction_is_mouse {
+                        if *current_iteraction_is_mouse != *is_mouse {
+                            continue;
+                        }
+                    }
                     if knob.interactable_zone_rect.contains(*pos) && knob.id_drag.is_none()
                         || is_some_and(knob.id_drag, |i| i != *id)
                             && knob.interactable_zone_rect.contains(*pos)
@@ -58,6 +59,7 @@ pub fn update_input<S: VirtualJoystickID>(
                         knob.start_pos = *pos;
                         knob.current_pos = *pos;
                         knob.delta = Vec2::ZERO;
+                        knob.current_iteraction_is_mouse = Some(*is_mouse);
                         send_values.send(VirtualJoystickEvent {
                             id: node.id.clone(),
                             event: VirtualJoystickEventType::Press,
@@ -67,7 +69,12 @@ pub fn update_input<S: VirtualJoystickID>(
                         });
                     }
                 }
-                InputEvent::Dragging { id, pos } => {
+                InputEvent::Dragging { id, pos, is_mouse } => {
+                    if let Some(current_iteraction_is_mouse) = &knob.current_iteraction_is_mouse {
+                        if *current_iteraction_is_mouse != *is_mouse {
+                            continue;
+                        }
+                    }
                     if !is_some_and(knob.id_drag, |i| i == *id) {
                         continue;
                     }
@@ -88,7 +95,16 @@ pub fn update_input<S: VirtualJoystickID>(
                         d.y.signum() * d.y.abs().min(1.),
                     );
                 }
-                InputEvent::EndDrag { id, pos: _ } => {
+                InputEvent::EndDrag {
+                    id,
+                    pos: _,
+                    is_mouse,
+                } => {
+                    if let Some(current_iteraction_is_mouse) = &knob.current_iteraction_is_mouse {
+                        if *current_iteraction_is_mouse != *is_mouse {
+                            continue;
+                        }
+                    }
                     if !is_some_and(knob.id_drag, |i| i == *id) {
                         continue;
                     }
@@ -97,6 +113,7 @@ pub fn update_input<S: VirtualJoystickID>(
                     knob.start_pos = Vec2::ZERO;
                     knob.current_pos = Vec2::ZERO;
                     knob.delta = Vec2::ZERO;
+                    knob.current_iteraction_is_mouse = None;
                     send_values.send(VirtualJoystickEvent {
                         id: node.id.clone(),
                         event: VirtualJoystickEventType::Up,
@@ -136,15 +153,27 @@ pub fn update_joystick(
         match phase {
             // Start drag
             TouchPhase::Started => {
-                send_values.send(InputEvent::StartDrag { id: *id, pos: *pos });
+                send_values.send(InputEvent::StartDrag {
+                    id: *id,
+                    pos: *pos,
+                    is_mouse: false,
+                });
             }
             // Dragging
             TouchPhase::Moved => {
-                send_values.send(InputEvent::Dragging { id: *id, pos: *pos });
+                send_values.send(InputEvent::Dragging {
+                    id: *id,
+                    pos: *pos,
+                    is_mouse: false,
+                });
             }
             // End drag
             TouchPhase::Ended | TouchPhase::Canceled => {
-                send_values.send(InputEvent::EndDrag { id: *id, pos: *pos });
+                send_values.send(InputEvent::EndDrag {
+                    id: *id,
+                    pos: *pos,
+                    is_mouse: false,
+                });
             }
         }
     }
@@ -162,17 +191,29 @@ pub fn update_joystick_by_mouse(
     for mousebtn in mousebtn_evr.read() {
         // End drag
         if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Released {
-            send_values.send(InputEvent::EndDrag { id: 0, pos });
+            send_values.send(InputEvent::EndDrag {
+                id: 0,
+                pos,
+                is_mouse: true,
+            });
         }
 
         // Start drag
         if mousebtn.button == MouseButton::Left && mousebtn.state == ButtonState::Pressed {
-            send_values.send(InputEvent::StartDrag { id: 0, pos });
+            send_values.send(InputEvent::StartDrag {
+                id: 0,
+                pos,
+                is_mouse: true,
+            });
         }
     }
 
     // Dragging
     if mouse_button_input.pressed(MouseButton::Left) {
-        send_values.send(InputEvent::Dragging { id: 0, pos });
+        send_values.send(InputEvent::Dragging {
+            id: 0,
+            pos,
+            is_mouse: true,
+        });
     }
 }
