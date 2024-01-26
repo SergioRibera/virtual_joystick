@@ -47,15 +47,10 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
+            .add_systems(PreUpdate, update_joystick.before(update_input::<S>))
             .add_systems(
                 PreUpdate,
-                update_joystick
-                    .before(update_input::<S>),
-            )
-            .add_systems(
-                PreUpdate,
-                update_joystick_by_mouse
-                    .before(update_input::<S>),
+                update_joystick_by_mouse.before(update_input::<S>),
             )
             .add_systems(PreUpdate, update_input::<S>)
             .add_systems(
