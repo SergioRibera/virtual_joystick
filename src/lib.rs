@@ -13,7 +13,7 @@ mod ui;
 mod utils;
 
 pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
-use input::{run_if_pc, update_input, update_joystick, update_joystick_by_mouse, InputEvent};
+use input::{update_input, update_joystick, update_joystick_by_mouse, InputEvent};
 pub use ui::{
     VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
     VirtualJoystickUIBackground, VirtualJoystickUIKnob,
@@ -50,14 +50,12 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .add_systems(
                 PreUpdate,
                 update_joystick
-                    .before(update_input::<S>)
-                    .run_if(not(run_if_pc)),
+                    .before(update_input::<S>),
             )
             .add_systems(
                 PreUpdate,
                 update_joystick_by_mouse
-                    .before(update_input::<S>)
-                    .run_if(run_if_pc),
+                    .before(update_input::<S>),
             )
             .add_systems(PreUpdate, update_input::<S>)
             .add_systems(

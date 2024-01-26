@@ -3,7 +3,7 @@ use bevy::{prelude::*, ui::RelativeCursorPosition};
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::prelude::*;
 
-use crate::{VirtualJoystickAxis, VirtualJoystickID, VirtualJoystickType};
+use crate::{input::TouchOrMouse, VirtualJoystickAxis, VirtualJoystickID, VirtualJoystickType};
 
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
@@ -70,6 +70,7 @@ pub struct VirtualJoystickData {
     pub current_pos: Vec2,
     pub delta: Vec2,
     pub interactable_zone_rect: Rect,
+    pub current_interaction_touch_or_mouse: Option<TouchOrMouse>,
 }
 
 impl<S: VirtualJoystickID> VirtualJoystickBundle<S> {
