@@ -10,7 +10,7 @@ fn main() {
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VirtualJoystickPlugin::<String>::default())
         .add_systems(Startup, create_scene)
-        .add_systems(First, update_joystick_visibility)
+        .add_systems(PreUpdate, update_joystick_visibility)
         .add_systems(Update, update_joystick)
         .run();
 }
