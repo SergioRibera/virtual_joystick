@@ -20,6 +20,10 @@ required-features = ["inspect"]
 name = "multiple"
 required-features = ["inspect"]
 
+[[example]]
+name = "invisible"
+required-features = ["inspect"]
+
 [features]
 default = ["serde"]
 inspect = ["bevy-inspector-egui"]
