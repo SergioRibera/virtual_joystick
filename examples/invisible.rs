@@ -49,8 +49,8 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
     {
         let knob_img = asset_server.load("Knob.png");
         let background_img = asset_server.load("Outline.png");
-        let knob_color = Some(*Color::WHITE.set_a(0.0));
-        let background_color = Some(*Color::WHITE.set_a(0.0));
+        let knob_color = Some(Color::WHITE.with_a(0.0));
+        let background_color = Some(Color::WHITE.with_a(0.0));
         let interactable_area_color = None;
         let knob_size = Vec2::new(75., 75.);
         let background_size = Vec2::new(JOYSTICK_BACKGROUND_SIZE, JOYSTICK_BACKGROUND_SIZE);
@@ -68,8 +68,10 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Px(0.0),
             ..default()
         };
-        let mut spawn =
-            cmd.spawn((VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style), InvisibleJoystick));
+        let mut spawn = cmd.spawn((
+            VirtualJoystickBundle::new(joystick_node).set_style(joystick_node_style),
+            InvisibleJoystick,
+        ));
         let spawn = spawn
             .insert(VirtualJoystickInteractionArea)
             .with_children(|parent| {
@@ -105,13 +107,18 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             spawn.insert(BackgroundColor(c));
         }
     }
-
 }
 
 fn update_joystick_visibility(
-    mut joystick: Query<(&mut Visibility, &mut Style), With<InvisibleJoystick>>,
+    mut joystick: Query<&mut Style, With<InvisibleJoystick>>,
     mut joystick_knob_ui: Query<&mut BackgroundColor, With<VirtualJoystickUIKnob>>,
-    mut joystick_background_ui: Query<&mut BackgroundColor, (With<VirtualJoystickUIBackground>, Without<VirtualJoystickUIKnob>)>,
+    mut joystick_background_ui: Query<
+        &mut BackgroundColor,
+        (
+            With<VirtualJoystickUIBackground>,
+            Without<VirtualJoystickUIKnob>,
+        ),
+    >,
     q_windows: Query<&Window, (With<PrimaryWindow>, Without<InvisibleJoystick>)>,
     touches: Res<Touches>,
     buttons: Res<Input<MouseButton>>,
@@ -130,7 +137,10 @@ fn update_joystick_visibility(
                 set_location = Some(position);
             }
         }
-    } else if touches.any_just_released() || touches.any_just_canceled() || buttons.any_just_released([MouseButton::Left]) {
+    } else if touches.any_just_released()
+        || touches.any_just_canceled()
+        || buttons.any_just_released([MouseButton::Left])
+    {
         change_visibility = Some(Visibility::Hidden);
         set_location = None;
     } else {
@@ -139,7 +149,7 @@ fn update_joystick_visibility(
     }
 
     if let Some(change_visibility) = change_visibility {
-        for (mut joystick_visibility, mut joystick_style) in &mut joystick {
+        for mut joystick_style in &mut joystick {
             if change_visibility == Visibility::Visible {
                 joystick_style.width = Val::Px(JOYSTICK_BACKGROUND_SIZE);
                 joystick_style.height = Val::Px(JOYSTICK_BACKGROUND_SIZE);
@@ -165,7 +175,7 @@ fn update_joystick_visibility(
     }
 
     if let Some(set_location) = set_location {
-        for (_, mut joystick_style) in &mut joystick {
+        for mut joystick_style in &mut joystick {
             joystick_style.left = Val::Px(set_location.x - 0.5 * JOYSTICK_BACKGROUND_SIZE);
             joystick_style.top = Val::Px(set_location.y - 0.5 * JOYSTICK_BACKGROUND_SIZE);
         }
