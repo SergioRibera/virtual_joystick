@@ -58,7 +58,9 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
                 joystick_image_node_system::<S>.before(UiSystem::Layout),
             );
 
-        let Ok(render_app) = app.get_sub_app_mut(RenderApp) else { return; };
+        let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
+            return;
+        };
         render_app.add_systems(
             ExtractSchedule,
             extract_joystick_node::<S>.after(RenderUiSystem::ExtractNode),
