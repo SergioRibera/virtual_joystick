@@ -65,7 +65,6 @@ pub struct VirtualJoystickNode<S: VirtualJoystickID> {
 pub struct VirtualJoystickData {
     pub id_drag: Option<u64>,
     pub dead_zone: f32,
-    pub base_pos: Vec2,
     pub start_pos: Vec2,
     pub current_pos: Vec2,
     pub delta: Vec2,
