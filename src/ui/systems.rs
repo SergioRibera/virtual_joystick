@@ -114,6 +114,6 @@ fn get_base_pos(
             } else {
                 joystick.start_pos.extend(0.)
             }
-        },
+        }
     }
 }
