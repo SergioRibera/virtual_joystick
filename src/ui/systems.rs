@@ -40,7 +40,6 @@ pub fn extract_joystick_node<S: VirtualJoystickID>(
                 || !view_visibility.get()
                 || uinode.size().x == 0.
                 || uinode.size().y == 0.
-                || data.id_drag.is_none() && joystick_node.behaviour == VirtualJoystickType::Dynamic
             {
                 continue;
             }
@@ -72,7 +71,6 @@ pub fn extract_joystick_node<S: VirtualJoystickID>(
                 || !view_visibility.get()
                 || uinode.size().x == 0.
                 || uinode.size().y == 0.
-                || data.id_drag.is_none() && joystick_node.behaviour == VirtualJoystickType::Dynamic
             {
                 continue;
             }
@@ -108,6 +106,14 @@ fn get_base_pos(
                 joystick.start_pos.extend(0.)
             }
         }
-        VirtualJoystickType::Dynamic => joystick.base_pos.extend(0.),
+        VirtualJoystickType::Dynamic => {
+            if joystick.id_drag.is_none() {
+                global_transform
+                    .compute_matrix()
+                    .transform_point3((container_rect.center() - (uinode.size() / 2.)).extend(0.))
+            } else {
+                joystick.start_pos.extend(0.)
+            }
+        },
     }
 }

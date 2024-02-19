@@ -81,7 +81,6 @@ pub fn update_input<S: VirtualJoystickID>(
                     knob.current_pos = *pos;
                     let half = knob.interactable_zone_rect.half_size();
                     if node.behaviour == VirtualJoystickType::Dynamic {
-                        knob.base_pos = *pos;
                         let to_knob = knob.current_pos - knob.start_pos;
                         let distance_to_knob = to_knob.length();
                         if distance_to_knob > half.x {
@@ -109,7 +108,6 @@ pub fn update_input<S: VirtualJoystickID>(
                         continue;
                     }
                     knob.id_drag = None;
-                    knob.base_pos = Vec2::ZERO;
                     knob.start_pos = Vec2::ZERO;
                     knob.current_pos = Vec2::ZERO;
                     knob.delta = Vec2::ZERO;
