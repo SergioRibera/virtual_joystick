@@ -11,7 +11,7 @@ mod utils;
 pub use behavior::{Behavior, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic};
 pub use bundles::VirtualJoystickBundle;
 pub use components::{
-    VirtualJoystickNode, VirtualJoystickUIBackground,
+    VirtualJoystickNode, VirtualJoystickState, VirtualJoystickUIBackground,
     VirtualJoystickUIKnob,
 };
 use systems::{
