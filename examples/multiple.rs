@@ -4,7 +4,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use virtual_joystick::*;
 
 // ID for joysticks
-#[derive(Default, Reflect, Hash, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Reflect, Hash, Clone, PartialEq, Eq)]
 enum JoystickController {
     #[default]
     MovementX,
