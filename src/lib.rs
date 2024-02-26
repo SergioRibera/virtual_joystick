@@ -2,19 +2,20 @@ use std::{hash::Hash, marker::PhantomData};
 
 use bevy::{ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath};
 
+mod behavior;
 mod bundles;
 mod components;
 mod systems;
 mod utils;
 
+pub use behavior::{Behavior, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic};
 pub use bundles::VirtualJoystickBundle;
 pub use components::{
-    JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly,
-    JoystickInvisible, JoystickVerticalOnly, VirtualJoystickNode, VirtualJoystickUIBackground,
+    VirtualJoystickNode, VirtualJoystickUIBackground,
     VirtualJoystickUIKnob,
 };
 use systems::{
-    update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating, update_horizontal_only, update_input, update_joystick_visible, update_ui, update_vertical_only
+    update_behavior, update_behavior_constraints, update_behavior_knob_delta, update_fire_events, update_input, update_missing_state, update_ui
 };
 pub use utils::create_joystick;
 
@@ -43,11 +44,11 @@ pub enum InputEvent {
 }
 
 pub trait VirtualJoystickID:
-    Hash + Sync + Send + Clone + Default + Reflect + TypePath + FromReflect + 'static
+    Hash + Sync + Send + Clone + std::fmt::Debug + Default + Reflect + TypePath + FromReflect + 'static
 {
 }
 
-impl<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + TypePath + 'static>
+impl<S: Hash + Sync + Send + Clone + std::fmt::Debug + Default + Reflect + FromReflect + TypePath + 'static>
     VirtualJoystickID for S
 {
 }
@@ -58,21 +59,20 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
-            .add_systems(PreUpdate, update_input::<S>)
+            .add_systems(PreUpdate, (
+                update_missing_state::<S>,
+                update_input.after(update_missing_state::<S>),
+            ))
             .add_systems(
                 UpdateKnobDelta,
-                (update_fixed::<S>, update_floating::<S>, update_dynamic::<S>),
+                update_behavior_knob_delta::<S>,
             )
             .add_systems(
                 ConstrainKnobDelta,
-                (
-                    update_dead_zone::<S>,
-                    update_horizontal_only::<S>,
-                    update_vertical_only::<S>,
-                ),
+                update_behavior_constraints::<S>,
             )
             .add_systems(FireEvents, update_fire_events::<S>)
-            .add_systems(UpdateUI, (update_joystick_visible::<S>, update_ui::<S>))
+            .add_systems(UpdateUI, (update_behavior::<S>, update_ui))
             .add_systems(Update, |world: &mut World| {
                 world.run_schedule(UpdateKnobDelta);
                 world.run_schedule(ConstrainKnobDelta);
