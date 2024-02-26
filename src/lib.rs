@@ -1,30 +1,45 @@
 use std::{hash::Hash, marker::PhantomData};
 
-use bevy::{
-    prelude::*,
-    reflect::TypePath,
-    render::RenderApp,
-    ui::{RenderUiSystem, UiSystem},
-};
+use bevy::{ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath};
 
-mod behaviour;
-mod input;
-mod ui;
+mod bundles;
+mod components;
+mod systems;
 mod utils;
 
-pub use behaviour::{VirtualJoystickAxis, VirtualJoystickType};
-use input::{update_input, update_joystick, update_joystick_by_mouse, InputEvent};
-pub use ui::{
-    VirtualJoystickBundle, VirtualJoystickInteractionArea, VirtualJoystickNode,
-    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+pub use bundles::VirtualJoystickBundle;
+pub use components::{
+    JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly,
+    JoystickInvisible, JoystickVerticalOnly, VirtualJoystickNode, VirtualJoystickUIBackground,
+    VirtualJoystickUIKnob,
+};
+use systems::{
+    update_dead_zone, update_dynamic, update_fire_events, update_fixed, update_floating, update_horizontal_only, update_input, update_joystick_visible, update_ui, update_vertical_only
 };
 pub use utils::create_joystick;
 
-use ui::{extract_joystick_node, VirtualJoystickData};
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct UpdateKnobDelta;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct ConstrainKnobDelta;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct FireEvents;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct UpdateUI;
 
 #[derive(Default)]
 pub struct VirtualJoystickPlugin<S> {
     _marker: PhantomData<S>,
+}
+
+#[derive(Event)]
+pub enum InputEvent {
+    StartDrag { id: u64, pos: Vec2, is_mouse: bool },
+    Dragging { id: u64, pos: Vec2, is_mouse: bool },
+    EndDrag { id: u64, pos: Vec2, is_mouse: bool },
 }
 
 pub trait VirtualJoystickID:
@@ -39,56 +54,31 @@ impl<S: Hash + Sync + Send + Clone + Default + Reflect + FromReflect + TypePath 
 
 impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.register_type::<VirtualJoystickInteractionArea>()
-            .register_type::<VirtualJoystickNode<S>>()
-            .register_type::<VirtualJoystickData>()
-            .register_type::<VirtualJoystickAxis>()
-            .register_type::<VirtualJoystickType>()
+        app.register_type::<VirtualJoystickNode<S>>()
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
-            .add_systems(PreUpdate, update_joystick.before(update_input::<S>))
-            .add_systems(
-                PreUpdate,
-                update_joystick_by_mouse.before(update_input::<S>),
-            )
             .add_systems(PreUpdate, update_input::<S>)
             .add_systems(
-                PostUpdate,
-                joystick_image_node_system::<S>.before(UiSystem::Layout),
-            );
-
-        let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
-            return;
-        };
-        render_app.add_systems(
-            ExtractSchedule,
-            extract_joystick_node::<S>.after(RenderUiSystem::ExtractNode),
-        );
-    }
-}
-
-fn joystick_image_node_system<S: VirtualJoystickID>(
-    interaction_area: Query<&Node, With<VirtualJoystickInteractionArea>>,
-    mut joystick: Query<(
-        &Transform,
-        &VirtualJoystickNode<S>,
-        &mut VirtualJoystickData,
-    )>,
-) {
-    let interaction_area = interaction_area
-        .iter()
-        .map(|node| node.size())
-        .collect::<Vec<Vec2>>();
-
-    for (i, (j_pos, data, mut knob)) in joystick.iter_mut().enumerate() {
-        let j_pos = j_pos.translation.truncate();
-        let Some(size) = interaction_area.get(i) else {
-            return;
-        };
-        let interaction_area = Rect::from_center_size(j_pos, *size);
-        knob.dead_zone = data.dead_zone;
-        knob.interactable_zone_rect = interaction_area;
+                UpdateKnobDelta,
+                (update_fixed::<S>, update_floating::<S>, update_dynamic::<S>),
+            )
+            .add_systems(
+                ConstrainKnobDelta,
+                (
+                    update_dead_zone::<S>,
+                    update_horizontal_only::<S>,
+                    update_vertical_only::<S>,
+                ),
+            )
+            .add_systems(FireEvents, update_fire_events::<S>)
+            .add_systems(UpdateUI, (update_joystick_visible::<S>, update_ui::<S>))
+            .add_systems(Update, |world: &mut World| {
+                world.run_schedule(UpdateKnobDelta);
+                world.run_schedule(ConstrainKnobDelta);
+                world.run_schedule(FireEvents);
+                world.run_schedule(UpdateUI);
+            });
     }
 }
 
@@ -106,7 +96,6 @@ pub struct VirtualJoystickEvent<S: VirtualJoystickID> {
     event: VirtualJoystickEventType,
     value: Vec2,
     delta: Vec2,
-    axis: VirtualJoystickAxis,
 }
 
 impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
@@ -117,11 +106,6 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
     /// Raw position of point (Mouse or Touch)
     pub fn value(&self) -> &Vec2 {
         &self.value
-    }
-
-    /// Axis of Joystick see [crate::VirtualJoystickAxis]
-    pub fn direction(&self) -> VirtualJoystickAxis {
-        self.axis
     }
 
     /// Delta value ranging from 0 to 1 in each vector (x and y)
@@ -139,33 +123,21 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
     /// the default of the dead_zone is 0.5
     pub fn snap_axis(&self, dead_zone: Option<f32>) -> Vec2 {
         let dead_zone = dead_zone.unwrap_or(0.5);
-        let x = if self.axis == VirtualJoystickAxis::Both
-            || self.axis == VirtualJoystickAxis::Horizontal
-        {
-            if self.delta.x > dead_zone {
-                1.
-            } else if self.delta.x < -dead_zone {
-                -1.
+        Vec2::new(
+            if self.delta.x < -dead_zone {
+                -1.0
+            } else if self.delta.x > dead_zone {
+                1.0
             } else {
-                0.
-            }
-        } else {
-            0.
-        };
-        let y = if self.axis == VirtualJoystickAxis::Both
-            || self.axis == VirtualJoystickAxis::Vertical
-        {
-            if self.delta.y > dead_zone {
-                1.
-            } else if self.delta.y < -dead_zone {
-                -1.
+                0.0
+            },
+            if self.delta.y < -dead_zone {
+                -1.0
+            } else if self.delta.y > dead_zone {
+                1.0
             } else {
-                0.
-            }
-        } else {
-            0.
-        };
-
-        Vec2::new(x, y)
+                0.0
+            },
+        )
     }
 }

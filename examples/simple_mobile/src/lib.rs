@@ -29,6 +29,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         transform: Transform::from_xyz(0., 0., 5.0),
         ..default()
     });
+    // Fake Player
     cmd.spawn(SpriteBundle {
         transform: Transform {
             translation: Vec3::new(0., 0., 0.),
@@ -42,10 +43,12 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         },
         ..default()
     })
-    .insert(Player(100.));
+    .insert(Player(50.));
+
     // Spawn Virtual Joystick at horizontal center using helper function
     create_joystick(
         &mut cmd,
+        "UniqueJoystick".to_string(),
         asset_server.load("Knob.png"),
         asset_server.load("Outline.png"),
         None,
@@ -53,12 +56,6 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Some(Color::ORANGE_RED.with_a(0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
-        VirtualJoystickNode {
-            dead_zone: 0.,
-            id: "UniqueJoystick".to_string(),
-            axis: VirtualJoystickAxis::Both,
-            behaviour: VirtualJoystickType::Floating,
-        },
         Style {
             width: Val::Px(150.),
             height: Val::Px(150.),
@@ -67,6 +64,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
+        (JoystickFloating),
     );
 }
 
