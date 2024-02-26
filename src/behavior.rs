@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use bevy::{ecs::{all_tuples, entity::Entity, world::World}, hierarchy::Children, math::{Rect, Vec2}, reflect::Reflect, render::view::Visibility, transform::components::GlobalTransform, ui::Node};
 
-use crate::components::VirtualJoystickState;
+use crate::{components::VirtualJoystickState, VirtualJoystickUIBackground};
 
 pub trait Behavior: Send + Sync + 'static {
     fn update_at_delta_stage(&self, _world: &mut World, _entity: Entity) {}
@@ -122,6 +122,7 @@ impl Behavior for JoystickFixed {
         }
         let mut joystick_base_rect: Option<Rect> = None;
         for &child in &children_entities {
+            if world.get::<VirtualJoystickUIBackground>(child).is_none() { continue; }
             let Some(joystick_base_node) = world.get::<Node>(child) else { continue; };
             let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else { continue; };
             joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
@@ -155,6 +156,7 @@ impl Behavior for JoystickFloating {
         }
         let mut joystick_base_rect: Option<Rect> = None;
         for &child in &children_entities {
+            if world.get::<VirtualJoystickUIBackground>(child).is_none() { continue; }
             let Some(joystick_base_node) = world.get::<Node>(child) else { continue; };
             let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else { continue; };
             joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
@@ -211,6 +213,7 @@ impl Behavior for JoystickDynamic {
         }
         let mut joystick_base_rect: Option<Rect> = None;
         for &child in &children_entities {
+            if world.get::<VirtualJoystickUIBackground>(child).is_none() { continue; }
             let Some(joystick_base_node) = world.get::<Node>(child) else { continue; };
             let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else { continue; };
             joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
