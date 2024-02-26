@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use bevy::{
     ecs::{component::Component, reflect::ReflectComponent},
     prelude::Vec2,
@@ -8,7 +10,7 @@ use bevy_inspector_egui::prelude::ReflectInspectorOptions;
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::InspectorOptions;
 
-use crate::VirtualJoystickID;
+use crate::{behavior::JoystickFloating, Behavior, VirtualJoystickID};
 
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
@@ -22,10 +24,29 @@ pub struct VirtualJoystickUIKnob;
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub struct VirtualJoystickUIBackground;
 
-#[derive(Component, Clone, Debug, Default, Reflect)]
+#[derive(Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct VirtualJoystickNode<S: VirtualJoystickID> {
     pub id: S,
+    #[reflect(ignore)]
+    pub behavior: Arc<dyn Behavior + Send + Sync + 'static>,
+}
+
+impl<S: VirtualJoystickID> Default for VirtualJoystickNode<S> {
+    fn default() -> Self {
+        Self { id: Default::default(), behavior: Arc::new(JoystickFloating), }
+    }
+}
+
+impl<S: VirtualJoystickID> std::fmt::Debug for VirtualJoystickNode<S> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VirtualJoystickNode").field("id", &self.id).finish()
+    }
+}
+
+#[derive(Component, Clone, Debug, Default, Reflect)]
+#[reflect(Component, Default)]
+pub struct VirtualJoystickState {
     pub touch_state: Option<TouchState>,
     pub just_released: bool,
     pub base_offset: Vec2,
@@ -35,6 +56,11 @@ pub struct VirtualJoystickNode<S: VirtualJoystickID> {
 impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
     pub fn with_id(mut self, id: S) -> Self {
         self.id = id;
+        self
+    }
+
+    pub fn with_behavior(mut self, behavior: impl Behavior) -> Self {
+        self.behavior = Arc::new(behavior);
         self
     }
 }
@@ -48,31 +74,3 @@ pub struct TouchState {
     pub current: Vec2,
     pub just_pressed: bool,
 }
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickDeadZone(pub f32);
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickHorizontalOnly;
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickVerticalOnly;
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickInvisible;
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickFixed;
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickFloating;
-
-#[derive(Component, Clone, Debug, Default, Reflect)]
-#[reflect(Component, Default)]
-pub struct JoystickDynamic;

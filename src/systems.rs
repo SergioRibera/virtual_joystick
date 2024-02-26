@@ -1,18 +1,32 @@
+use std::sync::Arc;
+
 use bevy::{
     ecs::{
-        event::EventWriter,
-        query::With,
-        system::{Query, Res},
-    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::{Rect, Vec2}, render::view::Visibility, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
+        entity::Entity, event::EventWriter, query::With, system::{Query, Res}, world::World
+    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::{Rect, Vec2}, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
 };
 
 use crate::{
-    components::{TouchState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly, JoystickInvisible, JoystickVerticalOnly, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode
+    components::{TouchState, VirtualJoystickState, VirtualJoystickUIBackground, VirtualJoystickUIKnob}, VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode
 };
 use bevy::ecs::query::Without;
 
-pub fn update_input<S: VirtualJoystickID>(
-    mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickNode<S>)>,
+pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
+    let mut joysticks = world.query::<(Entity,&VirtualJoystickNode<S>)>();
+    let mut joystick_entities: Vec<Entity> = Vec::new();
+    for (joystick_entity, _) in joysticks.iter(world) {
+        joystick_entities.push(joystick_entity);
+    }
+    for joystick_entity in joystick_entities {
+        let has_state = world.get::<VirtualJoystickState>(joystick_entity).is_some();
+        if !has_state {
+            world.entity_mut(joystick_entity).insert(VirtualJoystickState::default());
+        }
+    }
+}
+
+pub fn update_input(
+    mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickState)>,
     mouse_buttons: Res<Input<MouseButton>>,
     touches: Res<Touches>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
@@ -81,238 +95,90 @@ pub fn update_input<S: VirtualJoystickID>(
     }
 }
 
-pub fn update_fixed<S: VirtualJoystickID>(
-    mut joysticks: Query<
-        (&mut VirtualJoystickNode<S>, &Children),
-        With<JoystickFixed>,
-    >,
-    joystick_bases: Query<(&Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
-) {
-    for (mut joystick_state, children) in &mut joysticks {
-        let mut joystick_base_rect: Option<Rect> = None;
-        for &child in children.iter() {
-            if joystick_bases.contains(child) {
-                let (joystick_base_node, joystick_base_global_transform) = joystick_bases.get(child).unwrap();
-                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
-                break;
-            }
+pub fn update_behavior_knob_delta<S: VirtualJoystickID>(world: &mut World) {
+    let mut joysticks = world.query::<(Entity,&VirtualJoystickNode<S>)>();
+    let mut joystick_entities: Vec<Entity> = Vec::new();
+    for (joystick_entity, _) in joysticks.iter(world) {
+        joystick_entities.push(joystick_entity);
+    }
+    for joystick_entity in joystick_entities {
+        let behavior;
+        {
+            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(joystick_entity) else { continue; };
+            behavior = Arc::clone(&virtual_joystick_node.behavior);
         }
-        if joystick_base_rect.is_none() {
-            continue;
-        }
-        let joystick_base_rect = joystick_base_rect.unwrap();
-        joystick_state.base_offset = Vec2::ZERO;
-        let new_delta: Vec2;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - touch_state.start)
-                / joystick_base_rect.half_size())
-            .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
-            new_delta2.y = -new_delta2.y;
-            new_delta = new_delta2;
-        } else {
-            new_delta = Vec2::ZERO;
-        }
-        joystick_state.delta = new_delta;
+        behavior.update_at_delta_stage(world, joystick_entity);
     }
 }
 
-pub fn update_floating<S: VirtualJoystickID>(
-    mut joystick: Query<
-        (&mut VirtualJoystickNode<S>, &Children),
-        With<JoystickFloating>,
-    >,
-    joystick_bases: Query<(&Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
-) {
-    for (mut joystick_state, children) in &mut joystick {
-        let mut joystick_base_rect: Option<Rect> = None;
-        for &child in children.iter() {
-            if joystick_bases.contains(child) {
-                let (joystick_base_node, joystick_base_global_transform) = joystick_bases.get(child).unwrap();
-                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
-                break;
-            }
+pub fn update_behavior_constraints<S: VirtualJoystickID>(world: &mut World) {
+    let mut joysticks = world.query::<(Entity,&VirtualJoystickNode<S>)>();
+    let mut joystick_entities: Vec<Entity> = Vec::new();
+    for (joystick_entity, _) in joysticks.iter(world) {
+        joystick_entities.push(joystick_entity);
+    }
+    for joystick_entity in joystick_entities {
+        let behavior;
+        {
+            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(joystick_entity) else { continue; };
+            behavior = Arc::clone(&virtual_joystick_node.behavior);
         }
-        if joystick_base_rect.is_none() {
-            continue;
-        }
-        let joystick_base_rect = joystick_base_rect.unwrap();
-        let base_offset: Vec2;
-        let mut assign_base_offset = false;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
-                base_offset = touch_state.start - joystick_base_rect.center();
-                assign_base_offset = true;
-            } else {
-                base_offset = joystick_state.base_offset;
-            }
-        } else if joystick_state.just_released {
-            base_offset = Vec2::ZERO;
-            assign_base_offset = true;
-        } else {
-            base_offset = joystick_state.base_offset;
-        }
-        if assign_base_offset {
-            joystick_state.base_offset = base_offset;
-        }
-        let new_delta: Vec2;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - touch_state.start)
-                / joystick_base_rect.half_size())
-            .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
-            new_delta2.y = -new_delta2.y;
-            new_delta = new_delta2;
-        } else {
-            new_delta = Vec2::ZERO;
-        }
-        joystick_state.delta = new_delta;
+        behavior.update_at_constraint_stage(world, joystick_entity);
     }
 }
 
-pub fn update_dynamic<S: VirtualJoystickID>(
-    mut joysticks: Query<
-        (&Node, &GlobalTransform, &mut VirtualJoystickNode<S>, &Children),
-        With<JoystickDynamic>,
-    >,
-    joystick_bases: Query<(&Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
-) {
-    for (joystick_node, joystick_global_transform, mut joystick_state, children) in &mut joysticks {
-        let joystick_rect = joystick_node.logical_rect(joystick_global_transform);
-        let mut joystick_base_rect: Option<Rect> = None;
-        for &child in children.iter() {
-            if joystick_bases.contains(child) {
-                let (joystick_base_node, joystick_base_global_transform) = joystick_bases.get(child).unwrap();
-                joystick_base_rect = Some(joystick_base_node.logical_rect(joystick_base_global_transform));
-                break;
-            }
-        }
-        if joystick_base_rect.is_none() {
-            continue;
-        }
-        let joystick_base_rect = joystick_base_rect.unwrap();
-        let joystick_base_rect_center = joystick_base_rect.center();
-        let joystick_base_rect_half_size = joystick_base_rect.half_size();
-        let base_offset: Vec2;
-        let mut assign_base_offset = false;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
-                base_offset = touch_state.start - joystick_base_rect_center;
-                assign_base_offset = true;
-            } else {
-                base_offset = joystick_state.base_offset;
-            }
-        } else if joystick_state.just_released {
-            base_offset = Vec2::ZERO;
-            assign_base_offset = true;
-        } else {
-            base_offset = joystick_state.base_offset;
-        }
-        if assign_base_offset {
-            joystick_state.base_offset = base_offset;
-        }
-        let new_delta: Vec2;
-        let mut new_base_offset: Option<Vec2> = None;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            let mut offset = touch_state.current - (joystick_rect.min + base_offset + joystick_base_rect.half_size());
-            if offset.length_squared() > joystick_base_rect_half_size.x * joystick_base_rect_half_size.x {
-                let adjustment = offset - offset * (joystick_base_rect_half_size.x / offset.length());
-                offset += adjustment;
-                new_base_offset = Some(base_offset + adjustment);
-            }
-            let mut new_delta2 = (offset / joystick_base_rect_half_size)
-                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
-            new_delta2.y = -new_delta2.y;
-            new_delta = new_delta2;
-        } else {
-            new_delta = Vec2::ZERO;
-        }
-        joystick_state.delta = new_delta;
-        if let Some(base_offset) = new_base_offset {
-            joystick_state.base_offset = base_offset;
-        }
+pub fn update_behavior<S: VirtualJoystickID>(world: &mut World) {
+    let mut joysticks = world.query::<(Entity,&VirtualJoystickNode<S>)>();
+    let mut joystick_entities: Vec<Entity> = Vec::new();
+    for (joystick_entity, _) in joysticks.iter(world) {
+        joystick_entities.push(joystick_entity);
     }
-}
-
-pub fn update_dead_zone<S: VirtualJoystickID>(
-    mut joystick: Query<(&JoystickDeadZone, &mut VirtualJoystickNode<S>)>,
-) {
-    for (joystick_dead_zone, mut joystick_state) in &mut joystick {
-        let dead_zone = joystick_dead_zone.0;
-        if joystick_state.delta.x.abs() < dead_zone {
-            joystick_state.delta.x = 0.0;
+    for joystick_entity in joystick_entities {
+        let behavior;
+        {
+            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(joystick_entity) else { continue; };
+            behavior = Arc::clone(&virtual_joystick_node.behavior);
         }
-        if joystick_state.delta.y.abs() < dead_zone {
-            joystick_state.delta.y = 0.0;
-        }
-    }
-}
-
-pub fn update_horizontal_only<S: VirtualJoystickID>(
-    mut joystick: Query<&mut VirtualJoystickNode<S>, With<JoystickHorizontalOnly>>,
-) {
-    for mut joystick_state in &mut joystick {
-        joystick_state.delta.y = 0.0;
-    }
-}
-
-pub fn update_vertical_only<S: VirtualJoystickID>(
-    mut joystick: Query<&mut VirtualJoystickNode<S>, With<JoystickVerticalOnly>>,
-) {
-    for mut joystick_state in &mut joystick {
-        joystick_state.delta.x = 0.0;
+        behavior.update(world, joystick_entity);
     }
 }
 
 pub fn update_fire_events<S: VirtualJoystickID>(
-    joysticks: Query<&VirtualJoystickNode<S>>,
+    joysticks: Query<(&VirtualJoystickNode<S>,&VirtualJoystickState)>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,
 ) {
-    for joystick in &joysticks {
-        if joystick.just_released {
+    for (joystick, joystick_state) in &joysticks {
+        if joystick_state.just_released {
             send_values.send(VirtualJoystickEvent {
                 id: joystick.id.clone(),
                 event: VirtualJoystickEventType::Up,
                 value: Vec2::ZERO,
-                delta: joystick.delta,
+                delta: joystick_state.delta,
             });
             continue;
         }
-        if let Some(touch_state) = &joystick.touch_state {
+        if let Some(touch_state) = &joystick_state.touch_state {
             if touch_state.just_pressed {
                 send_values.send(VirtualJoystickEvent {
                     id: joystick.id.clone(),
                     event: VirtualJoystickEventType::Press,
                     value: touch_state.current,
-                    delta: joystick.delta,
+                    delta: joystick_state.delta,
                 });
             }
             send_values.send(VirtualJoystickEvent {
                 id: joystick.id.clone(),
                 event: VirtualJoystickEventType::Drag,
                 value: touch_state.current,
-                delta: joystick.delta,
+                delta: joystick_state.delta,
             });
         }
     }
 }
 
-pub fn update_joystick_visible<S: VirtualJoystickID>(
-    mut joysticks: Query<(&mut Visibility, &VirtualJoystickNode<S>), With<JoystickInvisible>>,
-) {
-    for (mut joystick_visibility, joystick_state) in &mut joysticks {
-        if joystick_state.just_released || *joystick_visibility != Visibility::Hidden && joystick_state.touch_state.is_none() {
-            *joystick_visibility = Visibility::Hidden;
-        }
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
-                *joystick_visibility = Visibility::Inherited;
-            }
-        }
-    }
-}
-
 #[allow(clippy::complexity)]
-pub fn update_ui<S: VirtualJoystickID>(
-    joysticks: Query<(&VirtualJoystickNode<S>, &Children)>,
+pub fn update_ui(
+    joysticks: Query<(&VirtualJoystickState, &Children)>,
     mut joystick_bases: Query<(&mut Style, &Node, &GlobalTransform), With<VirtualJoystickUIBackground>>,
     mut joystick_knobs: Query<
         (&mut Style, &Node, &GlobalTransform),
