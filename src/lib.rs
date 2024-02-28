@@ -69,7 +69,7 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
 }
 
 fn joystick_image_node_system<S: VirtualJoystickID>(
-    interaction_area: Query<(&Node, With<VirtualJoystickInteractionArea>)>,
+    interaction_area: Query<&Node, With<VirtualJoystickInteractionArea>>,
     mut joystick: Query<(
         &Transform,
         &VirtualJoystickNode<S>,
@@ -78,7 +78,7 @@ fn joystick_image_node_system<S: VirtualJoystickID>(
 ) {
     let interaction_area = interaction_area
         .iter()
-        .map(|(node, _)| node.size())
+        .map(|node| node.size())
         .collect::<Vec<Vec2>>();
 
     for (i, (j_pos, data, mut knob)) in joystick.iter_mut().enumerate() {
@@ -115,8 +115,8 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
         self.id.clone()
     }
     /// Raw position of point (Mouse or Touch)
-    pub fn value(&self) -> Vec2 {
-        self.value
+    pub fn value(&self) -> &Vec2 {
+        &self.value
     }
 
     /// Axis of Joystick see [crate::VirtualJoystickAxis]
@@ -125,8 +125,8 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
     }
 
     /// Delta value ranging from 0 to 1 in each vector (x and y)
-    pub fn axis(&self) -> Vec2 {
-        self.delta
+    pub fn axis(&self) -> &Vec2 {
+        &self.delta
     }
 
     /// Return the Type of Joystick Event
