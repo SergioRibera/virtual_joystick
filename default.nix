@@ -40,6 +40,7 @@ in
       stdenv.cc.cc.lib
       alsa-lib
       udev
+      libxkbcommon
       libxkbcommon.dev
       wayland
       wayland-protocols
