@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob
+    VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickBundle, VirtualJoystickID,
+    VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 
 /// This function is a simple helper to create a joystick
@@ -115,9 +116,9 @@ pub fn create_joystick<I: VirtualJoystickID>(
             VirtualJoystickNode::<I>::default()
                 .with_id(id)
                 .with_behavior(behavior)
-                .with_action(action)
-            )
-            .set_style(joystick_node_style),
+                .with_action(action),
+        )
+        .set_style(joystick_node_style),
     );
     let spawn = spawn.with_children(|parent| {
         parent.spawn((

@@ -10,7 +10,10 @@ use bevy_inspector_egui::prelude::ReflectInspectorOptions;
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::InspectorOptions;
 
-use crate::{action::NoAction, behavior::JoystickFloating, VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickID};
+use crate::{
+    action::NoAction, behavior::JoystickFloating, VirtualJoystickAction, VirtualJoystickBehavior,
+    VirtualJoystickID,
+};
 
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
@@ -31,18 +34,24 @@ pub struct VirtualJoystickNode<S: VirtualJoystickID> {
     #[reflect(ignore)]
     pub behavior: Arc<dyn VirtualJoystickBehavior>,
     #[reflect(ignore)]
-    pub action: Arc<dyn VirtualJoystickAction<S>>
+    pub action: Arc<dyn VirtualJoystickAction<S>>,
 }
 
 impl<S: VirtualJoystickID> Default for VirtualJoystickNode<S> {
     fn default() -> Self {
-        Self { id: Default::default(), behavior: Arc::new(JoystickFloating), action: Arc::new(NoAction::default()), }
+        Self {
+            id: Default::default(),
+            behavior: Arc::new(JoystickFloating),
+            action: Arc::new(NoAction::default()),
+        }
     }
 }
 
 impl<S: VirtualJoystickID> std::fmt::Debug for VirtualJoystickNode<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VirtualJoystickNode").field("id", &self.id).finish()
+        f.debug_struct("VirtualJoystickNode")
+            .field("id", &self.id)
+            .finish()
     }
 }
 
