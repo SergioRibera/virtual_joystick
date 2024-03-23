@@ -1,6 +1,4 @@
-use std::marker::PhantomData;
-
-use bevy::ecs::{all_tuples, entity::Entity, world::World};
+use bevy::ecs::{entity::Entity, world::World};
 
 use crate::VirtualJoystickState;
 

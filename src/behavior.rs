@@ -111,7 +111,7 @@ impl VirtualJoystickBehavior for JoystickVerticalOnly {
 
 impl VirtualJoystickBehavior for JoystickInvisible {
     fn update(&self, world: &mut World, entity: Entity) {
-        let joystick_state = world.get::<VirtualJoystickState>(entity).map(|x| x.clone());
+        let joystick_state = world.get::<VirtualJoystickState>(entity).cloned();
         let Some(joystick_state) = joystick_state else {
             return;
         };
