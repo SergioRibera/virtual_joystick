@@ -1,5 +1,5 @@
 use bevy::{
-    input::{mouse::MouseButtonInput, touch::TouchPhase, ButtonState},
+    input::{mouse::MouseButtonInput, ButtonState},
     prelude::*,
     window::PrimaryWindow,
 };
@@ -138,47 +138,42 @@ pub fn update_input<S: VirtualJoystickID>(
     }
 }
 
-pub fn update_joystick(
-    mut touch_events: EventReader<TouchInput>,
-    mut send_values: EventWriter<InputEvent>,
-) {
-    let touches = touch_events
-        .read()
-        .map(|e| (e.id, e.phase, e.position))
-        .collect::<Vec<(u64, TouchPhase, Vec2)>>();
+pub fn update_joystick(touch_events: Res<Touches>, mut send_values: EventWriter<InputEvent>) {
+    for e in touch_events.iter() {
+        let e: &bevy::input::touch::Touch = e;
+        let id = e.id();
+        let pos = e.position();
 
-    for (id, phase, pos) in &touches {
-        match phase {
+        if touch_events.just_pressed(e.id()) {
             // Start drag
-            TouchPhase::Started => {
-                send_values.send(InputEvent::StartDrag {
-                    id: *id,
-                    pos: *pos,
-                    is_mouse: false,
-                });
-            }
-            // Dragging
-            TouchPhase::Moved => {
-                send_values.send(InputEvent::Dragging {
-                    id: *id,
-                    pos: *pos,
-                    is_mouse: false,
-                });
-            }
-            // End drag
-            TouchPhase::Ended | TouchPhase::Canceled => {
-                send_values.send(InputEvent::EndDrag {
-                    id: *id,
-                    pos: *pos,
-                    is_mouse: false,
-                });
-            }
+            send_values.send(InputEvent::StartDrag {
+                id,
+                pos,
+                is_mouse: false,
+            });
+            continue;
         }
+
+        if touch_events.just_released(e.id()) {
+            // End drag
+            send_values.send(InputEvent::EndDrag {
+                id,
+                pos,
+                is_mouse: false,
+            });
+            continue;
+        }
+        // Dragging
+        send_values.send(InputEvent::Dragging {
+            id,
+            pos,
+            is_mouse: false,
+        });
     }
 }
 
 pub fn update_joystick_by_mouse(
-    mouse_button_input: Res<Input<MouseButton>>,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
     mut mousebtn_evr: EventReader<MouseButtonInput>,
     mut send_values: EventWriter<InputEvent>,
     windows: Query<&Window, With<PrimaryWindow>>,
