@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bevy::{
     ecs::{
         entity::Entity, event::EventWriter, query::With, system::{Query, Res}, world::World
-    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, Input}, math::{Rect, Vec2}, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
+    }, hierarchy::Children, input::{mouse::MouseButton, touch::Touches, ButtonInput}, math::{Rect, Vec2}, transform::components::GlobalTransform, ui::{Node, PositionType, Style, Val}, window::{PrimaryWindow, Window}
 };
 
 use crate::{
@@ -27,7 +27,7 @@ pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
 
 pub fn update_input(
     mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickState)>,
-    mouse_buttons: Res<Input<MouseButton>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
