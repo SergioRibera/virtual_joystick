@@ -42,7 +42,7 @@ impl<S: VirtualJoystickID> Default for VirtualJoystickNode<S> {
         Self {
             id: Default::default(),
             behavior: Arc::new(JoystickFloating),
-            action: Arc::new(NoAction::default()),
+            action: Arc::new(NoAction),
         }
     }
 }

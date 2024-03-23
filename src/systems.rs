@@ -175,9 +175,9 @@ pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
         joystick_entities.push(joystick_entity);
     }
     enum DragAction {
-        OnStartDrag,
-        OnDrag,
-        OnEndDrag,
+        StartDrag,
+        Drag,
+        EndDrag,
     }
     for joystick_entity in joystick_entities {
         let drag_action: Option<DragAction>;
@@ -186,12 +186,12 @@ pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
                 continue;
             };
             if joystick_state.just_released {
-                drag_action = Some(DragAction::OnEndDrag);
+                drag_action = Some(DragAction::EndDrag);
             } else if let Some(touch_state) = &joystick_state.touch_state {
                 if touch_state.just_pressed {
-                    drag_action = Some(DragAction::OnStartDrag);
+                    drag_action = Some(DragAction::StartDrag);
                 } else {
-                    drag_action = Some(DragAction::OnDrag);
+                    drag_action = Some(DragAction::Drag);
                 }
             } else {
                 drag_action = None;
@@ -214,13 +214,13 @@ pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
             joystick_state = joystick_state_2.clone();
         }
         match drag_action {
-            DragAction::OnStartDrag => {
+            DragAction::StartDrag => {
                 action.on_start_drag(id, joystick_state, world, joystick_entity);
             }
-            DragAction::OnDrag => {
+            DragAction::Drag => {
                 action.on_drag(id, joystick_state, world, joystick_entity);
             }
-            DragAction::OnEndDrag => {
+            DragAction::EndDrag => {
                 action.on_end_drag(id, joystick_state, world, joystick_entity);
             }
         }
