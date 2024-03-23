@@ -13,14 +13,7 @@ pub trait VirtualJoystickAction<I>: Send + Sync + 'static {
         _entity: Entity,
     ) {
     }
-    fn on_drag(
-        &self,
-        _id: I,
-        _data: VirtualJoystickState,
-        _world: &mut World,
-        _entity: Entity,
-    ) {
-    }
+    fn on_drag(&self, _id: I, _data: VirtualJoystickState, _world: &mut World, _entity: Entity) {}
     fn on_end_drag(
         &self,
         _id: I,

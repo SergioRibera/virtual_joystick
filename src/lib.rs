@@ -10,14 +10,17 @@ mod systems;
 mod utils;
 
 pub use action::{NoAction, VirtualJoystickAction};
-pub use behavior::{VirtualJoystickBehavior, JoystickDeadZone, JoystickHorizontalOnly, JoystickVerticalOnly, JoystickInvisible, JoystickFixed, JoystickFloating, JoystickDynamic};
+pub use behavior::{
+    JoystickDeadZone, JoystickDynamic, JoystickFixed, JoystickFloating, JoystickHorizontalOnly,
+    JoystickInvisible, JoystickVerticalOnly, VirtualJoystickBehavior,
+};
 pub use bundles::VirtualJoystickBundle;
 pub use components::{
-    VirtualJoystickNode, VirtualJoystickState, VirtualJoystickUIBackground,
-    VirtualJoystickUIKnob,
+    VirtualJoystickNode, VirtualJoystickState, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 use systems::{
-    update_action, update_behavior, update_behavior_constraints, update_behavior_knob_delta, update_fire_events, update_input, update_missing_state, update_ui
+    update_action, update_behavior, update_behavior_constraints, update_behavior_knob_delta,
+    update_fire_events, update_input, update_missing_state, update_ui,
 };
 pub use utils::create_joystick;
 
@@ -50,8 +53,18 @@ pub trait VirtualJoystickID:
 {
 }
 
-impl<S: Hash + Sync + Send + Clone + std::fmt::Debug + Default + Reflect + FromReflect + TypePath + 'static>
-    VirtualJoystickID for S
+impl<
+        S: Hash
+            + Sync
+            + Send
+            + Clone
+            + std::fmt::Debug
+            + Default
+            + Reflect
+            + FromReflect
+            + TypePath
+            + 'static,
+    > VirtualJoystickID for S
 {
 }
 
@@ -61,20 +74,20 @@ impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
             .register_type::<VirtualJoystickEventType>()
             .add_event::<VirtualJoystickEvent<S>>()
             .add_event::<InputEvent>()
-            .add_systems(PreUpdate, (
-                update_missing_state::<S>,
-                update_input.after(update_missing_state::<S>),
-            ))
             .add_systems(
-                UpdateKnobDelta,
-                update_behavior_knob_delta::<S>,
+                PreUpdate,
+                (
+                    update_missing_state::<S>,
+                    update_input.after(update_missing_state::<S>),
+                ),
             )
-            .add_systems(
-                ConstrainKnobDelta,
-                update_behavior_constraints::<S>,
-            )
+            .add_systems(UpdateKnobDelta, update_behavior_knob_delta::<S>)
+            .add_systems(ConstrainKnobDelta, update_behavior_constraints::<S>)
             .add_systems(FireEvents, update_fire_events::<S>)
-            .add_systems(UpdateUI, (update_behavior::<S>, update_action::<S>, update_ui))
+            .add_systems(
+                UpdateUI,
+                (update_behavior::<S>, update_action::<S>, update_ui),
+            )
             .add_systems(Update, |world: &mut World| {
                 world.run_schedule(UpdateKnobDelta);
                 world.run_schedule(ConstrainKnobDelta);

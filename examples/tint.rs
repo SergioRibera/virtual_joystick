@@ -19,7 +19,7 @@ struct Player(pub f32);
 
 struct TintAction {
     down: Color,
-    up: Color
+    up: Color,
 }
 
 impl VirtualJoystickAction<String> for TintAction {
@@ -32,7 +32,9 @@ impl VirtualJoystickAction<String> for TintAction {
     ) {
         let mut child_entities: Vec<Entity> = Vec::new();
         {
-            let Some(children) = world.get::<Children>(entity) else { return; };
+            let Some(children) = world.get::<Children>(entity) else {
+                return;
+            };
             for &child in children.iter() {
                 child_entities.push(child);
             }
@@ -40,9 +42,12 @@ impl VirtualJoystickAction<String> for TintAction {
         for &child in &child_entities {
             let is_base_or_knob: bool;
             {
-                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some() || world.get::<VirtualJoystickUIKnob>(entity).is_some();
+                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
+                    || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
-            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else { continue; };
+            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else {
+                continue;
+            };
             bg_color.0 = self.down;
         }
     }
@@ -56,7 +61,9 @@ impl VirtualJoystickAction<String> for TintAction {
     ) {
         let mut child_entities: Vec<Entity> = Vec::new();
         {
-            let Some(children) = world.get::<Children>(entity) else { return; };
+            let Some(children) = world.get::<Children>(entity) else {
+                return;
+            };
             for &child in children.iter() {
                 child_entities.push(child);
             }
@@ -64,9 +71,12 @@ impl VirtualJoystickAction<String> for TintAction {
         for &child in &child_entities {
             let is_base_or_knob: bool;
             {
-                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some() || world.get::<VirtualJoystickUIKnob>(entity).is_some();
+                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
+                    || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
-            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else { continue; };
+            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else {
+                continue;
+            };
             bg_color.0 = self.up;
         }
     }
@@ -116,7 +126,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         TintAction {
             down: Color::RED.with_a(1.0),
             up: Color::GREEN.with_a(0.5),
-        }
+        },
     );
 }
 
