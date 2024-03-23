@@ -65,6 +65,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         (JoystickFixed, JoystickHorizontalOnly),
+        NoAction,
     );
 
     // Spawn Virtual Joystick on Right
@@ -87,6 +88,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         (JoystickFixed, JoystickVerticalOnly),
+        NoAction,
     );
 }
 

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    Behavior, VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob
+    VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickBundle, VirtualJoystickID, VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob
 };
 
 /// This function is a simple helper to create a joystick
@@ -107,13 +107,15 @@ pub fn create_joystick<I: VirtualJoystickID>(
     knob_size: Vec2,
     background_size: Vec2,
     joystick_node_style: Style,
-    behavior: impl Behavior,
+    behavior: impl VirtualJoystickBehavior,
+    action: impl VirtualJoystickAction<I>,
 ) {
     let mut spawn = cmd.spawn(
         VirtualJoystickBundle::new(
             VirtualJoystickNode::<I>::default()
                 .with_id(id)
                 .with_behavior(behavior)
+                .with_action(action)
             )
             .set_style(joystick_node_style),
     );
