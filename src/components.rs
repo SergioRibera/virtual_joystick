@@ -10,7 +10,7 @@ use bevy_inspector_egui::prelude::ReflectInspectorOptions;
 #[cfg(feature = "inspect")]
 use bevy_inspector_egui::InspectorOptions;
 
-use crate::{behavior::JoystickFloating, Behavior, VirtualJoystickID};
+use crate::{action::NoAction, behavior::JoystickFloating, VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickID};
 
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
@@ -29,12 +29,14 @@ pub struct VirtualJoystickUIBackground;
 pub struct VirtualJoystickNode<S: VirtualJoystickID> {
     pub id: S,
     #[reflect(ignore)]
-    pub behavior: Arc<dyn Behavior + Send + Sync + 'static>,
+    pub behavior: Arc<dyn VirtualJoystickBehavior>,
+    #[reflect(ignore)]
+    pub action: Arc<dyn VirtualJoystickAction<S>>
 }
 
 impl<S: VirtualJoystickID> Default for VirtualJoystickNode<S> {
     fn default() -> Self {
-        Self { id: Default::default(), behavior: Arc::new(JoystickFloating), }
+        Self { id: Default::default(), behavior: Arc::new(JoystickFloating), action: Arc::new(NoAction::default()), }
     }
 }
 
@@ -59,8 +61,13 @@ impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
         self
     }
 
-    pub fn with_behavior(mut self, behavior: impl Behavior) -> Self {
+    pub fn with_behavior(mut self, behavior: impl VirtualJoystickBehavior) -> Self {
         self.behavior = Arc::new(behavior);
+        self
+    }
+
+    pub fn with_action(mut self, action: impl VirtualJoystickAction<S>) -> Self {
+        self.action = Arc::new(action);
         self
     }
 }

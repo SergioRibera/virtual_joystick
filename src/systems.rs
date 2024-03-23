@@ -143,6 +143,57 @@ pub fn update_behavior<S: VirtualJoystickID>(world: &mut World) {
     }
 }
 
+pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
+    let mut joysticks = world.query::<(Entity,&VirtualJoystickNode<S>,&mut VirtualJoystickState)>();
+    let mut joystick_entities: Vec<Entity> = Vec::new();
+    for (joystick_entity, _, _) in joysticks.iter(world) {
+        joystick_entities.push(joystick_entity);
+    }
+    enum DragAction {
+        OnStartDrag,
+        OnDrag,
+        OnEndDrag,
+    }
+    for joystick_entity in joystick_entities {
+        let drag_action: Option<DragAction>;
+        {
+            let Some(joystick_state) = world.get::<VirtualJoystickState>(joystick_entity) else { continue; };
+            if joystick_state.just_released {
+                drag_action = Some(DragAction::OnEndDrag);
+            } else if let Some(touch_state) = &joystick_state.touch_state {
+                if touch_state.just_pressed {
+                    drag_action = Some(DragAction::OnStartDrag);
+                } else {
+                    drag_action = Some(DragAction::OnDrag);
+                }
+            } else {
+                drag_action = None;
+            }
+        }
+        let Some(drag_action) = drag_action else { continue; };
+        let id;
+        let action;
+        let joystick_state;
+        {
+            let Ok((_, virtual_joystick_node, joystick_state_2)) = joysticks.get_mut(world, joystick_entity) else { continue; };
+            id = virtual_joystick_node.id.clone();
+            action = Arc::clone(&virtual_joystick_node.action);
+            joystick_state = joystick_state_2.clone();
+        }
+        match drag_action {
+            DragAction::OnStartDrag => {
+                action.on_start_drag(id, joystick_state, world, joystick_entity);
+            },
+            DragAction::OnDrag => {
+                action.on_drag(id, joystick_state, world, joystick_entity);
+            },
+            DragAction::OnEndDrag => {
+                action.on_end_drag(id, joystick_state, world, joystick_entity);
+            },
+        }
+    }
+}
+
 pub fn update_fire_events<S: VirtualJoystickID>(
     joysticks: Query<(&VirtualJoystickNode<S>,&VirtualJoystickState)>,
     mut send_values: EventWriter<VirtualJoystickEvent<S>>,

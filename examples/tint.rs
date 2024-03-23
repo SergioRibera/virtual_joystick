@@ -17,18 +17,19 @@ fn main() {
 // Player with velocity
 struct Player(pub f32);
 
-struct TintBehavior {
+struct TintAction {
     down: Color,
     up: Color
 }
 
-impl Behavior for TintBehavior {
-    fn update(&self, world: &mut World, entity: Entity) {
-        let is_down: bool;
-        {
-            let Some(virtual_joystick_state) = world.get::<VirtualJoystickState>(entity) else { return; };
-            is_down = virtual_joystick_state.touch_state.is_some();
-        }
+impl VirtualJoystickAction<String> for TintAction {
+    fn on_start_drag(
+        &self,
+        _id: String,
+        _data: VirtualJoystickState,
+        world: &mut World,
+        entity: Entity,
+    ) {
         let mut child_entities: Vec<Entity> = Vec::new();
         {
             let Some(children) = world.get::<Children>(entity) else { return; };
@@ -42,7 +43,31 @@ impl Behavior for TintBehavior {
                 is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some() || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
             let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else { continue; };
-            bg_color.0 = if is_down { self.down } else { self.up };
+            bg_color.0 = self.down;
+        }
+    }
+
+    fn on_end_drag(
+        &self,
+        _id: String,
+        _data: VirtualJoystickState,
+        world: &mut World,
+        entity: Entity,
+    ) {
+        let mut child_entities: Vec<Entity> = Vec::new();
+        {
+            let Some(children) = world.get::<Children>(entity) else { return; };
+            for &child in children.iter() {
+                child_entities.push(child);
+            }
+        }
+        for &child in &child_entities {
+            let is_base_or_knob: bool;
+            {
+                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some() || world.get::<VirtualJoystickUIKnob>(entity).is_some();
+            }
+            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else { continue; };
+            bg_color.0 = self.up;
         }
     }
 }
@@ -87,13 +112,11 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        (
-            JoystickFloating,
-            TintBehavior {
-                down: Color::RED.with_a(1.0),
-                up: Color::GREEN.with_a(0.5),
-            }
-        ),
+        JoystickFloating,
+        TintAction {
+            down: Color::RED.with_a(1.0),
+            up: Color::GREEN.with_a(0.5),
+        }
     );
 }
 

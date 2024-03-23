@@ -4,13 +4,13 @@ use bevy::{ecs::{all_tuples, entity::Entity, world::World}, hierarchy::Children,
 
 use crate::{components::VirtualJoystickState, VirtualJoystickUIBackground};
 
-pub trait Behavior: Send + Sync + 'static {
+pub trait VirtualJoystickBehavior: Send + Sync + 'static {
     fn update_at_delta_stage(&self, _world: &mut World, _entity: Entity) {}
     fn update_at_constraint_stage(&self, _world: &mut World, _entity: Entity) {}
     fn update(&self, _world: &mut World, _entity: Entity) {}
 }
 
-impl<A: Behavior + Clone> Behavior for Arc<A> {
+impl<A: VirtualJoystickBehavior + Clone> VirtualJoystickBehavior for Arc<A> {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
         (**self).update_at_delta_stage(world, entity);
     }
@@ -24,7 +24,7 @@ impl<A: Behavior + Clone> Behavior for Arc<A> {
 
 macro_rules! impl_behavior_sets {
     ($($set: ident),*) => {
-        impl<$($set: Behavior),*> Behavior for ($($set,)*)
+        impl<$($set: VirtualJoystickBehavior),*> VirtualJoystickBehavior for ($($set,)*)
         {
             #[allow(non_snake_case)]
             fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
@@ -68,7 +68,7 @@ pub struct JoystickFloating;
 #[derive(Clone, Copy, Debug, Default, Reflect)]
 pub struct JoystickDynamic;
 
-impl Behavior for JoystickDeadZone {
+impl VirtualJoystickBehavior for JoystickDeadZone {
     fn update_at_constraint_stage(&self, world: &mut World, entity: Entity) {
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else { return; };
         let dead_zone = self.0;
@@ -81,21 +81,21 @@ impl Behavior for JoystickDeadZone {
     }
 }
 
-impl Behavior for JoystickHorizontalOnly {
+impl VirtualJoystickBehavior for JoystickHorizontalOnly {
     fn update_at_constraint_stage(&self, world: &mut World, entity: Entity) {
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else { return; };
         joystick_state.delta.y = 0.0;
     }
 }
 
-impl Behavior for JoystickVerticalOnly {
+impl VirtualJoystickBehavior for JoystickVerticalOnly {
     fn update_at_constraint_stage(&self, world: &mut World, entity: Entity) {
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else { return; };
         joystick_state.delta.x = 0.0;
     }
 }
 
-impl Behavior for JoystickInvisible {
+impl VirtualJoystickBehavior for JoystickInvisible {
     fn update(&self, world: &mut World, entity: Entity) {
         let joystick_state = world.get::<VirtualJoystickState>(entity).map(|x| x.clone());
         let Some(joystick_state) = joystick_state else { return; };
@@ -111,7 +111,7 @@ impl Behavior for JoystickInvisible {
     }
 }
 
-impl Behavior for JoystickFixed {
+impl VirtualJoystickBehavior for JoystickFixed {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
         let mut children_entities: Vec<Entity> = Vec::new();
         {
@@ -145,7 +145,7 @@ impl Behavior for JoystickFixed {
     }
 }
 
-impl Behavior for JoystickFloating {
+impl VirtualJoystickBehavior for JoystickFloating {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
         let mut children_entities: Vec<Entity> = Vec::new();
         {
@@ -196,7 +196,7 @@ impl Behavior for JoystickFloating {
     }
 }
 
-impl Behavior for JoystickDynamic {
+impl VirtualJoystickBehavior for JoystickDynamic {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
         let joystick_rect: Rect;
         {

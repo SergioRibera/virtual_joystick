@@ -94,6 +94,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         (JoystickFixed, JoystickVerticalOnly),
+        NoAction,
     );
 }
 
