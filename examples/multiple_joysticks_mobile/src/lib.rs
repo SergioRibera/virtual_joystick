@@ -50,11 +50,12 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         },
         ..default()
     })
-    .insert(Player(100.));
+    .insert(Player(50.));
 
     // Spawn Virtual Joystick on left
     create_joystick(
         &mut cmd,
+        JoystickController::MovementX,
         asset_server.load("Knob.png"),
         asset_server.load("Horizontal_Outline_Arrows.png"),
         None,
@@ -62,12 +63,6 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Some(Color::ORANGE_RED.with_a(0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
-        VirtualJoystickNode {
-            dead_zone: 0.,
-            id: JoystickController::MovementX,
-            axis: VirtualJoystickAxis::Horizontal,
-            behaviour: VirtualJoystickType::Fixed,
-        },
         Style {
             width: Val::Px(150.),
             height: Val::Px(150.),
@@ -76,11 +71,13 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
+        (JoystickFixed, JoystickHorizontalOnly),
     );
 
     // Spawn Virtual Joystick on Right
     create_joystick(
         &mut cmd,
+        JoystickController::MovementY,
         asset_server.load("Knob.png"),
         asset_server.load("Vertical_Outline_Arrows.png"),
         None,
@@ -88,12 +85,6 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Some(Color::ORANGE_RED.with_a(0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
-        VirtualJoystickNode {
-            dead_zone: 0.,
-            id: JoystickController::MovementY,
-            axis: VirtualJoystickAxis::Vertical,
-            behaviour: VirtualJoystickType::Fixed,
-        },
         Style {
             width: Val::Px(150.),
             height: Val::Px(150.),
@@ -102,6 +93,8 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
+        (JoystickFixed, JoystickVerticalOnly),
+        NoAction,
     );
 }
 
