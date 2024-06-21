@@ -95,9 +95,10 @@ pub fn update_input(
                 joystick_state.just_released = true;
             } else if let Some(touch_state) = &mut joystick_state.touch_state {
                 if touch_state.is_mouse {
-                    let new_current = q_windows.single().cursor_position().unwrap();
-                    if new_current != touch_state.current {
-                        touch_state.current = new_current;
+                    if let Some(new_current) = q_windows.single().cursor_position() {
+                        if new_current != touch_state.current {
+                            touch_state.current = new_current;
+                        }
                     }
                 } else if let Some(touch) = touches.get_pressed(touch_state.id) {
                     let touch_position = touch.position();
