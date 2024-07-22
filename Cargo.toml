@@ -1,6 +1,6 @@
 [package]
 name = "virtual_joystick"
-version = "2.2.0"
+version = "2.3.0"
 edition = "2021"
 categories = ["game-engines", "input", "gui"]
 description = "Bevy virtual Joystick for mobile games"
@@ -24,18 +24,22 @@ required-features = ["inspect"]
 name = "invisible"
 required-features = ["inspect"]
 
+[[example]]
+name = "tint"
+required-features = ["inspect"]
+
 [features]
 default = ["serde"]
 inspect = ["bevy-inspector-egui"]
 serde = ["dep:serde"]
 
 [dependencies]
-bevy = { version = "0.13", default-features = false, features = [
+bevy = { version = "0.14", default-features = false, features = [
     "bevy_render",
     "bevy_ui",
 ] }
-bevy-inspector-egui = { version = "0.23", optional = true }
+bevy-inspector-egui = { version = "0.25", optional = true }
 serde = { version = "^1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-bevy = "0.13"
+bevy = "0.14"

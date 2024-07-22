@@ -27,7 +27,7 @@ use crate::{
 ///     asset_server.load("Outline.png"),
 ///     None,
 ///     None,
-///     Some(Color::ORANGE_RED.with_a(0.3)),
+///     Some(Color::rgba(1.0, 0.27, 0.0, 0.3))),
 ///     Vec2::new(75., 75.),
 ///     Vec2::new(150., 150.),
 ///     VirtualJoystickNode {
@@ -64,7 +64,7 @@ use crate::{
 ///         bottom: Val::Percent(15.),
 ///         ..default()
 ///     }),
-///     BackgroundColor(Color::ORANGE_RED.with_a(0.3)),
+///     BackgroundColor(Color::rgba(1.0, 0.27, 0.0, 0.3))),
 /// ))
 /// .insert(VirtualJoystickInteractionArea)
 /// .with_children(|parent| {
