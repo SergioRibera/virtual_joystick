@@ -144,7 +144,9 @@ pub fn create_joystick<I: VirtualJoystickID>(
             VirtualJoystickUIBackground,
             ImageBundle {
                 image: UiImage {
-                    color: knob_color.unwrap_or(Color::WHITE.with_alpha(1.0)).into(),
+                    color: background_color
+                        .unwrap_or(Color::WHITE.with_alpha(1.0))
+                        .into(),
                     texture: background_img,
                     ..default()
                 },
@@ -154,9 +156,6 @@ pub fn create_joystick<I: VirtualJoystickID>(
                     height: Val::Px(background_size.y),
                     ..default()
                 },
-                background_color: background_color
-                    .unwrap_or(Color::WHITE.with_alpha(0.0))
-                    .into(),
                 z_index: ZIndex::Local(0),
                 ..default()
             },

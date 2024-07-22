@@ -45,10 +45,10 @@ impl VirtualJoystickAction<String> for TintAction {
                 is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
                     || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
-            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else {
+            let Some(mut ui_image) = world.get_mut::<UiImage>(child) else {
                 continue;
             };
-            bg_color.0 = self.down;
+            ui_image.color = self.down;
         }
     }
 
@@ -74,10 +74,10 @@ impl VirtualJoystickAction<String> for TintAction {
                 is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
                     || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
-            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else {
+            let Some(mut ui_image) = world.get_mut::<UiImage>(child) else {
                 continue;
             };
-            bg_color.0 = self.up;
+            ui_image.color = self.up;
         }
     }
 }
