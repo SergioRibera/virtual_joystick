@@ -57,7 +57,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        JoystickFloating,
+        (JoystickFloating),
         NoAction,
     );
 }

@@ -122,7 +122,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        JoystickFloating,
+        (JoystickFloating),
         TintAction {
             down: Color::srgba(1.0, 0.0, 0.0, 1.0), // Red
             up: Color::srgba(0.0, 1.0, 0.0, 0.5),   // Green
