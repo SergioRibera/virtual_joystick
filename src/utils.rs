@@ -122,30 +122,42 @@ pub fn create_joystick<I: VirtualJoystickID>(
     );
     let spawn = spawn.with_children(|parent| {
         parent.spawn((
-            VirtualJoystickUIBackground,
-            ImageBundle {
-                image: background_img.into(),
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(background_size.x),
-                    height: Val::Px(background_size.y),
-                    ..default()
-                },
-                background_color: background_color.unwrap_or(Color::WHITE.with_alpha(0.0)).into(),
-                ..default()
-            },
-        ));
-        parent.spawn((
             VirtualJoystickUIKnob,
             ImageBundle {
-                image: knob_img.into(),
+                image: UiImage {
+                    color: knob_color.unwrap_or(Color::WHITE.with_alpha(0.0)).into(),
+                    texture: knob_img,
+                    ..default()
+                },
                 style: Style {
                     position_type: PositionType::Absolute,
                     width: Val::Px(knob_size.x),
                     height: Val::Px(knob_size.y),
                     ..default()
                 },
-                background_color: knob_color.unwrap_or(Color::WHITE.with_alpha(0.0)).into(),
+                z_index: ZIndex::Local(1),
+                ..default()
+            },
+        ));
+
+        parent.spawn((
+            VirtualJoystickUIBackground,
+            ImageBundle {
+                image: UiImage {
+                    color: knob_color.unwrap_or(Color::WHITE.with_alpha(0.0)).into(),
+                    texture: background_img,
+                    ..default()
+                },
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    width: Val::Px(background_size.x),
+                    height: Val::Px(background_size.y),
+                    ..default()
+                },
+                background_color: background_color
+                    .unwrap_or(Color::WHITE.with_alpha(0.0))
+                    .into(),
+                z_index: ZIndex::Local(0),
                 ..default()
             },
         ));
