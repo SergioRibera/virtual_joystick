@@ -144,8 +144,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
             VirtualJoystickUIBackground,
             ImageBundle {
                 image: UiImage {
-                    color: background_color
-                        .unwrap_or(Color::WHITE.with_alpha(1.0)),
+                    color: background_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
                     texture: background_img,
                     ..default()
                 },
