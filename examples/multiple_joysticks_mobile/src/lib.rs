@@ -3,7 +3,7 @@ use bevy::{prelude::*, window::WindowMode};
 use virtual_joystick::*;
 
 // ID for joysticks
-#[derive(Default, Reflect, Hash, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Reflect, Hash, Clone, PartialEq, Eq)]
 enum JoystickController {
     #[default]
     MovementX,
@@ -44,7 +44,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         },
         texture: asset_server.load("Knob.png"),
         sprite: Sprite {
-            color: Color::PURPLE,
+            color: Color::srgb(0.5, 0.0, 0.5),
             custom_size: Some(Vec2::new(50., 50.)),
             ..default()
         },
@@ -60,7 +60,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("Horizontal_Outline_Arrows.png"),
         None,
         None,
-        Some(Color::ORANGE_RED.with_a(0.3)),
+        Some(Color::srgba(1.0, 0.27, 0.0, 0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
         Style {
@@ -72,6 +72,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         (JoystickFixed, JoystickHorizontalOnly),
+        NoAction,
     );
 
     // Spawn Virtual Joystick on Right
@@ -82,7 +83,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("Vertical_Outline_Arrows.png"),
         None,
         None,
-        Some(Color::ORANGE_RED.with_a(0.3)),
+        Some(Color::srgba(1.0, 0.27, 0.0, 0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
         Style {

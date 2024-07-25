@@ -1,6 +1,8 @@
 use std::{hash::Hash, marker::PhantomData};
 
-use bevy::{ecs::schedule::ScheduleLabel, prelude::*, reflect::TypePath};
+use bevy::{
+    ecs::schedule::ScheduleLabel, prelude::*, reflect::GetTypeRegistration, reflect::TypePath,
+};
 
 mod action;
 mod behavior;
@@ -68,7 +70,7 @@ impl<
 {
 }
 
-impl<S: VirtualJoystickID> Plugin for VirtualJoystickPlugin<S> {
+impl<S: VirtualJoystickID + GetTypeRegistration> Plugin for VirtualJoystickPlugin<S> {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<VirtualJoystickNode<S>>()
             .register_type::<VirtualJoystickEventType>()

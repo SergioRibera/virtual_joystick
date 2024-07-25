@@ -14,6 +14,7 @@ Aviable and compatible versions
 
 |  bevy  | VirtualJoystick |
 |--------|-----------------|
+|  0.14  |      2.2.0      |
 |  0.13  |      2.2.0      |
 |  0.12  |      2.1.0      |
 |  0.11  |      2.0.1      |
@@ -123,7 +124,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         asset_server.load("Outline.png"),
         None,
         None,
-        Some(Color::ORANGE_RED.with_a(0.3)),
+        Some(Color::rgba(1.0, 0.27, 0.0, 0.3))),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
         VirtualJoystickNode {

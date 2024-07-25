@@ -45,10 +45,10 @@ impl VirtualJoystickAction<String> for TintAction {
                 is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
                     || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
-            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else {
+            let Some(mut ui_image) = world.get_mut::<UiImage>(child) else {
                 continue;
             };
-            bg_color.0 = self.down;
+            ui_image.color = self.down;
         }
     }
 
@@ -74,10 +74,10 @@ impl VirtualJoystickAction<String> for TintAction {
                 is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
                     || world.get::<VirtualJoystickUIKnob>(entity).is_some();
             }
-            let Some(mut bg_color) = world.get_mut::<BackgroundColor>(child) else {
+            let Some(mut ui_image) = world.get_mut::<UiImage>(child) else {
                 continue;
             };
-            bg_color.0 = self.up;
+            ui_image.color = self.up;
         }
     }
 }
@@ -95,7 +95,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         },
         texture: asset_server.load("Knob.png"),
         sprite: Sprite {
-            color: Color::PURPLE,
+            color: Color::srgb(0.5, 0.0, 0.5), // Purple
             custom_size: Some(Vec2::new(50., 50.)),
             ..default()
         },
@@ -109,9 +109,9 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         "UniqueJoystick".to_string(),
         asset_server.load("Knob.png"),
         asset_server.load("Outline.png"),
-        Some(Color::GREEN.with_a(0.5)),
-        Some(Color::GREEN.with_a(0.5)),
-        Some(Color::ORANGE_RED.with_a(0.2)),
+        Some(Color::srgba(0.0, 1.0, 0.0, 0.5)),  // Green
+        Some(Color::srgba(0.0, 1.0, 0.0, 0.5)),  // Green
+        Some(Color::srgba(1.0, 0.27, 0.0, 0.3)), // OrangeRed
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
         Style {
@@ -122,10 +122,10 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        JoystickFloating,
+        (JoystickFloating),
         TintAction {
-            down: Color::RED.with_a(1.0),
-            up: Color::GREEN.with_a(0.5),
+            down: Color::srgba(1.0, 0.0, 0.0, 1.0), // Red
+            up: Color::srgba(0.0, 1.0, 0.0, 0.5),   // Green
         },
     );
 }

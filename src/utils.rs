@@ -27,7 +27,7 @@ use crate::{
 ///     asset_server.load("Outline.png"),
 ///     None,
 ///     None,
-///     Some(Color::ORANGE_RED.with_a(0.3)),
+///     Some(Color::rgba(1.0, 0.27, 0.0, 0.3))),
 ///     Vec2::new(75., 75.),
 ///     Vec2::new(150., 150.),
 ///     VirtualJoystickNode {
@@ -64,7 +64,7 @@ use crate::{
 ///         bottom: Val::Percent(15.),
 ///         ..default()
 ///     }),
-///     BackgroundColor(Color::ORANGE_RED.with_a(0.3)),
+///     BackgroundColor(Color::rgba(1.0, 0.27, 0.0, 0.3))),
 /// ))
 /// .insert(VirtualJoystickInteractionArea)
 /// .with_children(|parent| {
@@ -124,28 +124,37 @@ pub fn create_joystick<I: VirtualJoystickID>(
         parent.spawn((
             VirtualJoystickUIKnob,
             ImageBundle {
-                image: knob_img.into(),
+                image: UiImage {
+                    color: knob_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
+                    texture: knob_img,
+                    ..default()
+                },
                 style: Style {
                     position_type: PositionType::Absolute,
                     width: Val::Px(knob_size.x),
                     height: Val::Px(knob_size.y),
                     ..default()
                 },
-                background_color: knob_color.unwrap_or(Color::WHITE).into(),
+                z_index: ZIndex::Local(1),
                 ..default()
             },
         ));
+
         parent.spawn((
             VirtualJoystickUIBackground,
             ImageBundle {
-                image: background_img.into(),
+                image: UiImage {
+                    color: background_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
+                    texture: background_img,
+                    ..default()
+                },
                 style: Style {
                     position_type: PositionType::Absolute,
                     width: Val::Px(background_size.x),
                     height: Val::Px(background_size.y),
                     ..default()
                 },
-                background_color: background_color.unwrap_or(Color::WHITE).into(),
+                z_index: ZIndex::Local(0),
                 ..default()
             },
         ));

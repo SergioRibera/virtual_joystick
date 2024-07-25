@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
 use bevy::{
-    ecs::{all_tuples, entity::Entity, world::World},
+    ecs::{entity::Entity, world::World},
     hierarchy::Children,
     math::{Rect, Vec2},
     reflect::Reflect,
     render::view::Visibility,
     transform::components::GlobalTransform,
     ui::Node,
+    utils::all_tuples,
 };
 
 use crate::{components::VirtualJoystickState, VirtualJoystickUIBackground};
