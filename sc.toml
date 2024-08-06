@@ -1,0 +1,21 @@
+# Tool from https://github.com/romancitodev/simple-commits
+
+[git]
+skip_preview = true
+skip_emojis = true
+
+[[scopes]]
+name = "examples"
+description = "The examples has modified"
+
+[[scopes]]
+name = "lib"
+description = "Developer experience library"
+
+[[scopes]]
+name = "ui"
+description = "UI layer modification"
+
+[[scopes]]
+name = "deps"
+description = "Dependencies modified"
