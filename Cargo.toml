@@ -2,7 +2,7 @@
 name = "virtual_joystick"
 version = "2.2.0"
 edition = "2021"
-categories = ["game-engines", "input", "gui"]
+categories = ["game-engines", "gui"]
 description = "Bevy virtual Joystick for mobile games"
 exclude = ["default_assets/", ".github/", "examples/*_mobile/"]
 homepage = "https://github.com/SergioRibera/virtual_joystick"

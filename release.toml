@@ -6,7 +6,7 @@ verify = true
 push = true
 pre-release-commit-message = "chore: Release {{crate_name}} version {{version}}"
 pre-release-replacements = [
-    { file = "README.md", search = "\\|  0.13  \\|      [0-9\\.-]+      \\|", replace = "|  0.13  |      {{version}}      |" },
+    { file = "README.md", search = "\\|  0.14  \\|      [0-9\\.-]+      \\|", replace = "|  0.14  |      {{version}}      |" },
 ]
 tag-message = "chore: Release {{crate_name}} version {{version}}"
 tag-name = "{{version}}"
