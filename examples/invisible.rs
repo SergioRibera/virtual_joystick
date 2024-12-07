@@ -28,8 +28,8 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             translation: Vec3::new(0., 0., 0.),
             ..default()
         },
-        texture: asset_server.load("Knob.png"),
         sprite: Sprite {
+            image: asset_server.load("Knob.png"),
             color: Color::srgb(0.5, 0.0, 0.5),
             custom_size: Some(Vec2::new(50., 50.)),
             ..default()

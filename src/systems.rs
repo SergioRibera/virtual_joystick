@@ -10,9 +10,9 @@ use bevy::{
     },
     hierarchy::Children,
     input::{mouse::MouseButton, touch::Touches, ButtonInput},
-    math::{Rect, Vec2},
+    math::{Rect, Vec2, Vec3Swizzles},
     transform::components::GlobalTransform,
-    ui::{Node, PositionType, Style, Val},
+    ui::{ComputedNode, Node, PositionType, Val},
     window::{PrimaryWindow, Window},
 };
 
@@ -41,7 +41,7 @@ pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
 }
 
 pub fn update_input(
-    mut joysticks: Query<(&Node, &GlobalTransform, &mut VirtualJoystickState)>,
+    mut joysticks: Query<(&ComputedNode, &GlobalTransform, &mut VirtualJoystickState)>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
@@ -52,7 +52,10 @@ pub fn update_input(
             touch_state.just_pressed = false;
         }
         if joystick_state.touch_state.is_none() {
-            let rect = joystick_node.logical_rect(joystick_global_transform);
+            let rect = Rect::from_center_size(
+                joystick_global_transform.translation().xy(),
+                joystick_node.size(),
+            );
             for touch in touches.iter() {
                 if rect.contains(touch.position()) {
                     joystick_state.touch_state = Some(TouchState {
@@ -265,11 +268,11 @@ pub fn update_fire_events<S: VirtualJoystickID>(
 pub fn update_ui(
     joysticks: Query<(&VirtualJoystickState, &Children)>,
     mut joystick_bases: Query<
-        (&mut Style, &Node, &GlobalTransform),
+        (&mut Node, &ComputedNode, &GlobalTransform),
         With<VirtualJoystickUIBackground>,
     >,
     mut joystick_knobs: Query<
-        (&mut Style, &Node, &GlobalTransform),
+        (&mut Node, &ComputedNode, &GlobalTransform),
         (
             With<VirtualJoystickUIKnob>,
             Without<VirtualJoystickUIBackground>,
@@ -285,8 +288,12 @@ pub fn update_ui(
                 joystick_base_style.position_type = PositionType::Absolute;
                 joystick_base_style.left = Val::Px(joystick_state.base_offset.x);
                 joystick_base_style.top = Val::Px(joystick_state.base_offset.y);
-                joystick_base_rect =
-                    Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+
+                let rect = Rect::from_center_size(
+                    joystick_base_global_transform.translation().xy(),
+                    joystick_base_node.size(),
+                );
+                joystick_base_rect = Some(rect);
             }
         }
         if joystick_base_rect.is_none() {
@@ -298,8 +305,10 @@ pub fn update_ui(
             if joystick_knobs.contains(*child) {
                 let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) =
                     joystick_knobs.get_mut(*child).unwrap();
-                let joystick_knob_rect =
-                    joystick_knob_node.logical_rect(joystick_knob_global_transform);
+                let joystick_knob_rect = Rect::from_center_size(
+                    joystick_knob_global_transform.translation().xy(),
+                    joystick_knob_node.size(),
+                );
                 let joystick_knob_half_size = joystick_knob_rect.half_size();
                 joystick_knob_style.position_type = PositionType::Absolute;
                 joystick_knob_style.left = Val::Px(

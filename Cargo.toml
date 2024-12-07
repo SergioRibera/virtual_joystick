@@ -34,12 +34,12 @@ inspect = ["bevy-inspector-egui"]
 serde = ["dep:serde"]
 
 [dependencies]
-bevy = { version = "0.14", default-features = false, features = [
+bevy = { version = "0.15", features = [
     "bevy_render",
     "bevy_ui",
 ] }
-bevy-inspector-egui = { version = "0.25", optional = true }
+bevy-inspector-egui = { version = "0.28", optional = true }
 serde = { version = "^1", features = ["derive"], optional = true }
 
 [dev-dependencies]
-bevy = "0.14"
+bevy = "0.15"

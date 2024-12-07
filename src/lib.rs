@@ -70,7 +70,9 @@ impl<
 {
 }
 
-impl<S: VirtualJoystickID + GetTypeRegistration> Plugin for VirtualJoystickPlugin<S> {
+impl<S: VirtualJoystickID + GetTypeRegistration + bevy::reflect::Typed> Plugin
+    for VirtualJoystickPlugin<S>
+{
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<VirtualJoystickNode<S>>()
             .register_type::<VirtualJoystickEventType>()
