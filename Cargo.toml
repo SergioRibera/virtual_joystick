@@ -34,7 +34,7 @@ inspect = ["bevy-inspector-egui"]
 serde = ["dep:serde"]
 
 [dependencies]
-bevy = { version = "0.15", features = [
+bevy = { version = "0.15", default-features = false, features = [
     "bevy_render",
     "bevy_ui",
 ] }
