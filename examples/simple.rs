@@ -18,22 +18,12 @@ fn main() {
 struct Player(pub f32);
 
 fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
-    cmd.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(0., 0., 5.0),
-        ..default()
-    });
+    cmd.spawn((Camera2d, Transform::from_xyz(0., 0., 5.0)));
     // Fake Player
-    cmd.spawn(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(0., 0., 0.),
-            ..default()
-        },
-        texture: asset_server.load("Knob.png"),
-        sprite: Sprite {
-            color: Color::srgb(0.5, 0.0, 0.5), //Purple
-            custom_size: Some(Vec2::new(50., 50.)),
-            ..default()
-        },
+    cmd.spawn(Sprite {
+        image: asset_server.load("Knob.png"),
+        color: Color::srgb(0.5, 0.0, 0.5), //Purple
+        custom_size: Some(Vec2::new(50., 50.)),
         ..default()
     })
     .insert(Player(50.));
@@ -49,7 +39,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Some(Color::srgba(1.0, 0.27, 0.0, 0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
-        Style {
+        Node {
             width: Val::Px(150.),
             height: Val::Px(150.),
             position_type: PositionType::Absolute,
@@ -71,7 +61,7 @@ fn update_joystick(
 
     for j in joystick.read() {
         let Vec2 { x, y } = j.axis();
-        player.translation.x += x * player_data.0 * time_step.delta_seconds();
-        player.translation.y += y * player_data.0 * time_step.delta_seconds();
+        player.translation.x += x * player_data.0 * time_step.delta_secs();
+        player.translation.y += y * player_data.0 * time_step.delta_secs();
     }
 }

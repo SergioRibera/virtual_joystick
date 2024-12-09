@@ -3,7 +3,7 @@ use bevy::{
     prelude::default,
     render::view::{InheritedVisibility, ViewVisibility, Visibility},
     transform::components::{GlobalTransform, Transform},
-    ui::{Node, Style, ZIndex},
+    ui::{ComputedNode, Node, ZIndex},
 };
 
 use crate::{VirtualJoystickID, VirtualJoystickNode};
@@ -11,9 +11,9 @@ use crate::{VirtualJoystickID, VirtualJoystickNode};
 #[derive(Bundle, Debug, Default)]
 pub struct VirtualJoystickBundle<S: VirtualJoystickID> {
     /// Describes the size of the node
-    pub(crate) node: Node,
+    pub(crate) node: ComputedNode,
     /// Describes the style including flexbox settings
-    pub(crate) style: Style,
+    pub(crate) style: Node,
     /// The texture atlas image of the node
     pub(crate) joystick: VirtualJoystickNode<S>,
     /// The transform of the node
@@ -38,12 +38,12 @@ impl<S: VirtualJoystickID> VirtualJoystickBundle<S> {
         }
     }
 
-    pub fn set_node(mut self, node: Node) -> Self {
+    pub fn set_node(mut self, node: ComputedNode) -> Self {
         self.node = node;
         self
     }
 
-    pub fn set_style(mut self, style: Style) -> Self {
+    pub fn set_style(mut self, style: Node) -> Self {
         self.style = style;
         self
     }

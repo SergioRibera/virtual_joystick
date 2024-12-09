@@ -3,11 +3,11 @@ use std::sync::Arc;
 use bevy::{
     ecs::{entity::Entity, world::World},
     hierarchy::Children,
-    math::{Rect, Vec2},
+    math::{Rect, Vec2, Vec3Swizzles},
     reflect::Reflect,
     render::view::Visibility,
     transform::components::GlobalTransform,
-    ui::Node,
+    ui::ComputedNode,
     utils::all_tuples,
 };
 
@@ -148,14 +148,17 @@ impl VirtualJoystickBehavior for JoystickFixed {
             if world.get::<VirtualJoystickUIBackground>(child).is_none() {
                 continue;
             }
-            let Some(joystick_base_node) = world.get::<Node>(child) else {
+            let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
                 continue;
             };
             let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else {
                 continue;
             };
-            joystick_base_rect =
-                Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+            let rect = Rect::from_center_size(
+                joystick_base_global_transform.translation().xy(),
+                joystick_base_node.size(),
+            );
+            joystick_base_rect = Some(rect);
             break;
         }
         let Some(joystick_base_rect) = joystick_base_rect else {
@@ -195,14 +198,17 @@ impl VirtualJoystickBehavior for JoystickFloating {
             if world.get::<VirtualJoystickUIBackground>(child).is_none() {
                 continue;
             }
-            let Some(joystick_base_node) = world.get::<Node>(child) else {
+            let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
                 continue;
             };
             let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else {
                 continue;
             };
-            joystick_base_rect =
-                Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+            let rect = Rect::from_center_size(
+                joystick_base_global_transform.translation().xy(),
+                joystick_base_node.size(),
+            );
+            joystick_base_rect = Some(rect);
             break;
         }
         let Some(joystick_base_rect) = joystick_base_rect else {
@@ -247,13 +253,16 @@ impl VirtualJoystickBehavior for JoystickDynamic {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
         let joystick_rect: Rect;
         {
-            let Some(joystick_node) = world.get::<Node>(entity) else {
+            let Some(joystick_node) = world.get::<ComputedNode>(entity) else {
                 return;
             };
             let Some(joystick_global_transform) = world.get::<GlobalTransform>(entity) else {
                 return;
             };
-            joystick_rect = joystick_node.logical_rect(joystick_global_transform);
+            joystick_rect = Rect::from_center_size(
+                joystick_global_transform.translation().xy(),
+                joystick_node.size(),
+            );
         }
         let mut children_entities: Vec<Entity> = Vec::new();
         {
@@ -269,14 +278,17 @@ impl VirtualJoystickBehavior for JoystickDynamic {
             if world.get::<VirtualJoystickUIBackground>(child).is_none() {
                 continue;
             }
-            let Some(joystick_base_node) = world.get::<Node>(child) else {
+            let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
                 continue;
             };
             let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else {
                 continue;
             };
-            joystick_base_rect =
-                Some(joystick_base_node.logical_rect(joystick_base_global_transform));
+            let rect = Rect::from_center_size(
+                joystick_base_global_transform.translation().xy(),
+                joystick_base_node.size(),
+            );
+            joystick_base_rect = Some(rect);
             break;
         }
         let Some(joystick_base_rect) = joystick_base_rect else {

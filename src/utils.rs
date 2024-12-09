@@ -107,7 +107,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
     interactable_area_color: Option<Color>,
     knob_size: Vec2,
     background_size: Vec2,
-    joystick_node_style: Style,
+    joystick_node_style: Node,
     behavior: impl VirtualJoystickBehavior,
     action: impl VirtualJoystickAction<I>,
 ) {
@@ -123,40 +123,34 @@ pub fn create_joystick<I: VirtualJoystickID>(
     let spawn = spawn.with_children(|parent| {
         parent.spawn((
             VirtualJoystickUIKnob,
-            ImageBundle {
-                image: UiImage {
-                    color: knob_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
-                    texture: knob_img,
-                    ..default()
-                },
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(knob_size.x),
-                    height: Val::Px(knob_size.y),
-                    ..default()
-                },
-                z_index: ZIndex::Local(1),
+            ImageNode {
+                color: knob_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
+                image: knob_img,
                 ..default()
             },
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Px(knob_size.x),
+                height: Val::Px(knob_size.y),
+                ..default()
+            },
+            ZIndex(1),
         ));
 
         parent.spawn((
             VirtualJoystickUIBackground,
-            ImageBundle {
-                image: UiImage {
-                    color: background_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
-                    texture: background_img,
-                    ..default()
-                },
-                style: Style {
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(background_size.x),
-                    height: Val::Px(background_size.y),
-                    ..default()
-                },
-                z_index: ZIndex::Local(0),
+            ImageNode {
+                color: background_color.unwrap_or(Color::WHITE.with_alpha(1.0)),
+                image: background_img,
                 ..default()
             },
+            Node {
+                position_type: PositionType::Absolute,
+                width: Val::Px(background_size.x),
+                height: Val::Px(background_size.y),
+                ..default()
+            },
+            ZIndex(0),
         ));
     });
 
