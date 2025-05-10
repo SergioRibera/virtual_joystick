@@ -8,7 +8,7 @@ use bevy::{
         system::{Query, Res},
         world::World,
     },
-    hierarchy::Children,
+    prelude::Children,
     input::{mouse::MouseButton, touch::Touches, ButtonInput},
     math::{Rect, Vec2, Vec3Swizzles},
     transform::components::GlobalTransform,
@@ -70,15 +70,17 @@ pub fn update_input(
             }
             if joystick_state.touch_state.is_none() && mouse_buttons.just_pressed(MouseButton::Left)
             {
-                if let Some(mouse_pos) = q_windows.single().cursor_position() {
-                    if rect.contains(mouse_pos) {
-                        joystick_state.touch_state = Some(TouchState {
-                            id: 0,
-                            is_mouse: true,
-                            start: mouse_pos,
-                            current: mouse_pos,
-                            just_pressed: true,
-                        });
+                if let Ok(window) = q_windows.single() {
+                    if let Some(mouse_pos) = window.cursor_position() {
+                        if rect.contains(mouse_pos) {
+                            joystick_state.touch_state = Some(TouchState {
+                                id: 0,
+                                is_mouse: true,
+                                start: mouse_pos,
+                                current: mouse_pos,
+                                just_pressed: true,
+                            });
+                        }
                     }
                 }
             }
@@ -98,9 +100,11 @@ pub fn update_input(
                 joystick_state.just_released = true;
             } else if let Some(touch_state) = &mut joystick_state.touch_state {
                 if touch_state.is_mouse {
-                    if let Some(new_current) = q_windows.single().cursor_position() {
-                        if new_current != touch_state.current {
-                            touch_state.current = new_current;
+                    if let Ok(window) = q_windows.single() {
+                        if let Some(new_current) = window.cursor_position() {
+                            if new_current != touch_state.current {
+                                touch_state.current = new_current;
+                            }
                         }
                     }
                 } else if let Some(touch) = touches.get_pressed(touch_state.id) {
@@ -237,7 +241,7 @@ pub fn update_fire_events<S: VirtualJoystickID>(
 ) {
     for (joystick, joystick_state) in &joysticks {
         if joystick_state.just_released {
-            send_values.send(VirtualJoystickEvent {
+            send_values.write(VirtualJoystickEvent {
                 id: joystick.id.clone(),
                 event: VirtualJoystickEventType::Up,
                 value: Vec2::ZERO,
@@ -247,14 +251,14 @@ pub fn update_fire_events<S: VirtualJoystickID>(
         }
         if let Some(touch_state) = &joystick_state.touch_state {
             if touch_state.just_pressed {
-                send_values.send(VirtualJoystickEvent {
+                send_values.write(VirtualJoystickEvent {
                     id: joystick.id.clone(),
                     event: VirtualJoystickEventType::Press,
                     value: touch_state.current,
                     delta: joystick_state.delta,
                 });
             }
-            send_values.send(VirtualJoystickEvent {
+            send_values.write(VirtualJoystickEvent {
                 id: joystick.id.clone(),
                 event: VirtualJoystickEventType::Drag,
                 value: touch_state.current,

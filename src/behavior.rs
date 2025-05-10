@@ -2,14 +2,14 @@ use std::sync::Arc;
 
 use bevy::{
     ecs::{entity::Entity, world::World},
-    hierarchy::Children,
+    prelude::Children,
     math::{Rect, Vec2, Vec3Swizzles},
     reflect::Reflect,
     render::view::Visibility,
     transform::components::GlobalTransform,
     ui::ComputedNode,
-    utils::all_tuples,
 };
+use variadics_please::all_tuples;
 
 use crate::{components::VirtualJoystickState, VirtualJoystickUIBackground};
 
@@ -134,17 +134,12 @@ impl VirtualJoystickBehavior for JoystickInvisible {
 
 impl VirtualJoystickBehavior for JoystickFixed {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
-        let mut children_entities: Vec<Entity> = Vec::new();
-        {
-            let Some(children) = world.get::<Children>(entity) else {
-                return;
-            };
-            for &child in children.iter() {
-                children_entities.push(child);
-            }
-        }
         let mut joystick_base_rect: Option<Rect> = None;
-        for &child in &children_entities {
+        let Some(children) = world.get::<Children>(entity) else {
+            return;
+        };
+
+        for &child in children.iter() {
             if world.get::<VirtualJoystickUIBackground>(child).is_none() {
                 continue;
             }
@@ -184,17 +179,12 @@ impl VirtualJoystickBehavior for JoystickFixed {
 
 impl VirtualJoystickBehavior for JoystickFloating {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
-        let mut children_entities: Vec<Entity> = Vec::new();
-        {
-            let Some(children) = world.get::<Children>(entity) else {
-                return;
-            };
-            for &child in children.iter() {
-                children_entities.push(child);
-            }
-        }
         let mut joystick_base_rect: Option<Rect> = None;
-        for &child in &children_entities {
+        let Some(children) = world.get::<Children>(entity) else {
+            return;
+        };
+
+        for &child in children.iter() {
             if world.get::<VirtualJoystickUIBackground>(child).is_none() {
                 continue;
             }
@@ -264,17 +254,12 @@ impl VirtualJoystickBehavior for JoystickDynamic {
                 joystick_node.size(),
             );
         }
-        let mut children_entities: Vec<Entity> = Vec::new();
-        {
-            let Some(children) = world.get::<Children>(entity) else {
-                return;
-            };
-            for &child in children.iter() {
-                children_entities.push(child);
-            }
-        }
         let mut joystick_base_rect: Option<Rect> = None;
-        for &child in &children_entities {
+        let Some(children) = world.get::<Children>(entity) else {
+            return;
+        };
+
+        for &child in children.iter() {
             if world.get::<VirtualJoystickUIBackground>(child).is_none() {
                 continue;
             }

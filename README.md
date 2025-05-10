@@ -80,7 +80,7 @@ use bevy::prelude::*;
 // import crate
 use virtual_joystick::*;
 
-// ID for joysticks
+/// ID for joysticks
 #[derive(Default, Reflect, Hash, Clone, PartialEq, Eq)]
 enum JoystickControllerID {
     #[default]
@@ -154,7 +154,9 @@ fn update_joystick(
     time_step: Res<Time>,
 ) {
     // Get player
-    let (mut player, player_data) = player.single_mut();
+    let Ok((mut player, player_data)) = player.single_mut() else {
+        return;
+    };
 
     // Iter each joystick event
     for j in joystick.read() {
@@ -163,8 +165,8 @@ fn update_joystick(
         match j.id() {
             JoystickControllerID::Joystick1 => {
                 // Move player using joystick axis value
-                player.translation.x += x * player_data.0 * time_step.delta_seconds();
-                player.translation.y += y * player_data.0 * time_step.delta_seconds();
+                player.translation.x += x * player_data.0 * time_step.delta_secs();
+                player.translation.y += y * player_data.0 * time_step.delta_secs();
             }
         }
     }

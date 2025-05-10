@@ -1,11 +1,14 @@
-use bevy::{prelude::*, ui::update};
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy::prelude::*;
+use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 use virtual_joystick::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(EguiPlugin {
+            enable_multipass_for_primary_context: true,
+        })
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VirtualJoystickPlugin::<String>::default())
         .add_systems(Startup, create_scene)
@@ -14,7 +17,7 @@ fn main() {
 }
 
 #[derive(Component)]
-// Player with velocity
+/// Player with velocity
 struct Player(pub f32);
 
 struct TintAction {
@@ -30,22 +33,10 @@ impl VirtualJoystickAction<String> for TintAction {
         world: &mut World,
         entity: Entity,
     ) {
-        let mut child_entities: Vec<Entity> = Vec::new();
-        {
-            let Some(children) = world.get::<Children>(entity) else {
-                return;
-            };
-            for &child in children.iter() {
-                child_entities.push(child);
-            }
-        }
-        for &child in &child_entities {
-            let is_base_or_knob: bool;
-            {
-                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
-                    || world.get::<VirtualJoystickUIKnob>(entity).is_some();
-            }
-            let Some(mut ui_image) = world.get_mut::<UiImage>(child) else {
+        let children = world.get::<Children>(entity).iter().collect::<Vec<_>>();
+
+        for child in children.iter() {
+            let Some(mut ui_image) = world.get_mut::<ImageNode>(*child) else {
                 continue;
             };
             ui_image.color = self.down;
@@ -59,22 +50,10 @@ impl VirtualJoystickAction<String> for TintAction {
         world: &mut World,
         entity: Entity,
     ) {
-        let mut child_entities: Vec<Entity> = Vec::new();
-        {
-            let Some(children) = world.get::<Children>(entity) else {
-                return;
-            };
-            for &child in children.iter() {
-                child_entities.push(child);
-            }
-        }
-        for &child in &child_entities {
-            let is_base_or_knob: bool;
-            {
-                is_base_or_knob = world.get::<VirtualJoystickUIBackground>(entity).is_some()
-                    || world.get::<VirtualJoystickUIKnob>(entity).is_some();
-            }
-            let Some(mut ui_image) = world.get_mut::<UiImage>(child) else {
+        let children = world.get::<Children>(entity).iter().collect::<Vec<_>>();
+
+        for child in children.iter() {
+            let Some(mut ui_image) = world.get_mut::<ImageNode>(*child) else {
                 continue;
             };
             ui_image.color = self.up;
@@ -83,25 +62,18 @@ impl VirtualJoystickAction<String> for TintAction {
 }
 
 fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
-    cmd.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(0., 0., 5.0),
-        ..default()
-    });
+    cmd.spawn(Camera2d);
     // Fake Player
-    cmd.spawn(SpriteBundle {
-        transform: Transform {
-            translation: Vec3::new(0., 0., 0.),
-            ..default()
-        },
-        texture: asset_server.load("Knob.png"),
-        sprite: Sprite {
+    cmd.spawn((
+        Sprite {
+            image: asset_server.load("Knob.png"),
             color: Color::srgb(0.5, 0.0, 0.5), // Purple
             custom_size: Some(Vec2::new(50., 50.)),
             ..default()
         },
-        ..default()
-    })
-    .insert(Player(50.));
+        Player(50.),
+        Transform::default(),
+    ));
 
     // Spawn Virtual Joystick at horizontal center using helper function
     create_joystick(
@@ -114,7 +86,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Some(Color::srgba(1.0, 0.27, 0.0, 0.3)), // OrangeRed
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
-        Style {
+        Node {
             width: Val::Px(150.),
             height: Val::Px(150.),
             position_type: PositionType::Absolute,
@@ -122,7 +94,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
             bottom: Val::Percent(15.),
             ..default()
         },
-        (JoystickFloating),
+        JoystickFloating,
         TintAction {
             down: Color::srgba(1.0, 0.0, 0.0, 1.0), // Red
             up: Color::srgba(0.0, 1.0, 0.0, 0.5),   // Green
@@ -135,11 +107,13 @@ fn update_joystick(
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<Time>,
 ) {
-    let (mut player, player_data) = player.single_mut();
+    let Ok((mut player, player_data)) = player.single_mut() else {
+        return;
+    };
 
     for j in joystick.read() {
         let Vec2 { x, y } = j.axis();
-        player.translation.x += x * player_data.0 * time_step.delta_seconds();
-        player.translation.y += y * player_data.0 * time_step.delta_seconds();
+        player.translation.x += x * player_data.0 * time_step.delta_secs();
+        player.translation.y += y * player_data.0 * time_step.delta_secs();
     }
 }
