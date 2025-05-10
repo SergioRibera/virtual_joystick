@@ -1,11 +1,12 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_inspector_egui::{bevy_egui::EguiPlugin, quick::WorldInspectorPlugin};
 
 use virtual_joystick::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(EguiPlugin { enable_multipass_for_primary_context: true })
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VirtualJoystickPlugin::<String>::default())
         .add_systems(Startup, create_scene)
@@ -14,7 +15,7 @@ fn main() {
 }
 
 #[derive(Component)]
-// Player with velocity
+/// Player with velocity
 struct Player(pub f32);
 
 fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
@@ -40,14 +41,14 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
         Node {
-            width: Val::Px(150.),
-            height: Val::Px(150.),
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
             position_type: PositionType::Absolute,
-            left: Val::Percent(50.),
-            bottom: Val::Percent(15.),
+            left: Val::Percent(0.),
+            bottom: Val::Percent(0.),
             ..default()
         },
-        (JoystickFloating),
+        JoystickFloating,
         NoAction,
     );
 }
@@ -57,7 +58,9 @@ fn update_joystick(
     mut player: Query<(&mut Transform, &Player)>,
     time_step: Res<Time>,
 ) {
-    let (mut player, player_data) = player.single_mut();
+    let Ok((mut player, player_data)) = player.single_mut() else {
+        return;
+    };
 
     for j in joystick.read() {
         let Vec2 { x, y } = j.axis();
