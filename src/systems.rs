@@ -8,9 +8,9 @@ use bevy::{
         system::{Query, Res},
         world::World,
     },
-    prelude::Children,
     input::{mouse::MouseButton, touch::Touches, ButtonInput},
     math::{Rect, Vec2, Vec3Swizzles},
+    prelude::Children,
     transform::components::GlobalTransform,
     ui::{ComputedNode, Node, PositionType, Val},
     window::{PrimaryWindow, Window},
@@ -53,8 +53,8 @@ pub fn update_input(
         }
         if joystick_state.touch_state.is_none() {
             let rect = Rect::from_center_size(
-                joystick_global_transform.translation().xy(),
-                joystick_node.size(),
+                joystick_global_transform.translation().xy() * joystick_node.inverse_scale_factor(),
+                joystick_node.size() * joystick_node.inverse_scale_factor(),
             );
             for touch in touches.iter() {
                 if rect.contains(touch.position()) {
@@ -294,8 +294,9 @@ pub fn update_ui(
                 joystick_base_style.top = Val::Px(joystick_state.base_offset.y);
 
                 let rect = Rect::from_center_size(
-                    joystick_base_global_transform.translation().xy(),
-                    joystick_base_node.size(),
+                    joystick_base_global_transform.translation().xy()
+                        * joystick_base_node.inverse_scale_factor,
+                    joystick_base_node.size() * joystick_base_node.inverse_scale_factor,
                 );
                 joystick_base_rect = Some(rect);
             }
@@ -310,8 +311,9 @@ pub fn update_ui(
                 let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) =
                     joystick_knobs.get_mut(*child).unwrap();
                 let joystick_knob_rect = Rect::from_center_size(
-                    joystick_knob_global_transform.translation().xy(),
-                    joystick_knob_node.size(),
+                    joystick_knob_global_transform.translation().xy()
+                        * joystick_knob_node.inverse_scale_factor,
+                    joystick_knob_node.size() * joystick_knob_node.inverse_scale_factor,
                 );
                 let joystick_knob_half_size = joystick_knob_rect.half_size();
                 joystick_knob_style.position_type = PositionType::Absolute;

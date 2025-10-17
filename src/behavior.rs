@@ -195,8 +195,8 @@ impl VirtualJoystickBehavior for JoystickFloating {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy(),
-                joystick_base_node.size(),
+                joystick_base_global_transform.translation().xy() * joystick_base_node.inverse_scale_factor(),
+                joystick_base_node.size() * joystick_base_node.inverse_scale_factor,
             );
             joystick_base_rect = Some(rect);
             break;
