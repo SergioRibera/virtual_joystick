@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use bevy::{
     ecs::{entity::Entity, world::World},
-    prelude::Children,
     math::{Rect, Vec2, Vec3Swizzles},
+    prelude::Children,
     reflect::Reflect,
     render::view::Visibility,
     transform::components::GlobalTransform,
@@ -195,8 +195,9 @@ impl VirtualJoystickBehavior for JoystickFloating {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy(),
-                joystick_base_node.size(),
+                joystick_base_global_transform.translation().xy()
+                    * joystick_base_node.inverse_scale_factor(),
+                joystick_base_node.size() * joystick_base_node.inverse_scale_factor,
             );
             joystick_base_rect = Some(rect);
             break;
