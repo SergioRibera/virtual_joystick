@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::components::JoystickInteractionArea;
 use crate::{
     VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickBundle, VirtualJoystickID,
     VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
@@ -36,7 +37,7 @@ use crate::{
 ///         axis: VirtualJoystickAxis::Both,
 ///         behaviour: VirtualJoystickType::Floating,
 ///     },
-///     Style {
+///     Node {
 ///         width: Val::Px(150.),
 ///         height: Val::Px(150.),
 ///         position_type: PositionType::Absolute,
@@ -56,7 +57,7 @@ use crate::{
 ///         axis: VirtualJoystickAxis::Both,
 ///         behaviour: VirtualJoystickType::Floating,
 ///     })
-///     .set_style(Style {
+///     .set_style(Node {
 ///         width: Val::Px(150.),
 ///         height: Val::Px(150.),
 ///         position_type: PositionType::Absolute,
@@ -120,7 +121,23 @@ pub fn create_joystick<I: VirtualJoystickID>(
         )
         .set_style(joystick_node_style),
     );
-    let spawn = spawn.with_children(|parent| {
+
+    if let Some(c) = interactable_area_color {
+        spawn.insert(BackgroundColor(c));
+    }
+
+    spawn.with_children(|parent| {
+        // Interaction Area
+        parent.spawn((
+            JoystickInteractionArea,
+            Node {
+                width: Val::Percent(100.),
+                height: Val::Percent(100.),
+                ..default()
+            },
+        ));
+
+        // Knob
         parent.spawn((
             VirtualJoystickUIKnob,
             ImageNode {
@@ -137,6 +154,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
             ZIndex(1),
         ));
 
+        // Background
         parent.spawn((
             VirtualJoystickUIBackground,
             ImageNode {
@@ -153,8 +171,4 @@ pub fn create_joystick<I: VirtualJoystickID>(
             ZIndex(0),
         ));
     });
-
-    if let Some(c) = interactable_area_color {
-        spawn.insert(BackgroundColor(c));
-    }
 }

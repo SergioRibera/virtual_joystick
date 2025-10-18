@@ -18,7 +18,8 @@ use bevy::{
 
 use crate::{
     components::{
-        TouchState, VirtualJoystickState, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+        JoystickInteractionArea, TouchState, VirtualJoystickState, VirtualJoystickUIBackground,
+        VirtualJoystickUIKnob,
     },
     VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode,
 };
@@ -41,23 +42,49 @@ pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
 }
 
 pub fn update_input(
-    mut joysticks: Query<(&ComputedNode, &GlobalTransform, &mut VirtualJoystickState)>,
+    mut joysticks: Query<(
+        Entity,
+        &ComputedNode,
+        &GlobalTransform,
+        &mut VirtualJoystickState,
+    )>,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
     q_windows: Query<&Window, With<PrimaryWindow>>,
+    children_query: Query<&Children>,
+    interaction_areas: Query<(&ComputedNode, &GlobalTransform), With<JoystickInteractionArea>>,
 ) {
-    for (joystick_node, joystick_global_transform, mut joystick_state) in &mut joysticks {
+    for (joystick_entity, joystick_node, joystick_global_transform, mut joystick_state) in
+        &mut joysticks
+    {
         joystick_state.just_released = false;
         if let Some(touch_state) = &mut joystick_state.touch_state {
             touch_state.just_pressed = false;
         }
-        if joystick_state.touch_state.is_none() {
-            let rect = Rect::from_center_size(
+
+        let mut interaction_rect: Option<Rect> = None;
+        if let Ok(children) = children_query.get(joystick_entity) {
+            for &child in children.iter() {
+                if let Ok((node, transform)) = interaction_areas.get(child) {
+                    interaction_rect = Some(Rect::from_center_size(
+                        transform.translation().xy() * node.inverse_scale_factor(),
+                        node.size() * node.inverse_scale_factor(),
+                    ));
+                    break;
+                }
+            }
+        }
+
+        let interaction_rect = interaction_rect.unwrap_or_else(|| {
+            Rect::from_center_size(
                 joystick_global_transform.translation().xy() * joystick_node.inverse_scale_factor(),
                 joystick_node.size() * joystick_node.inverse_scale_factor(),
-            );
+            )
+        });
+
+        if joystick_state.touch_state.is_none() {
             for touch in touches.iter() {
-                if rect.contains(touch.position()) {
+                if interaction_rect.contains(touch.position()) {
                     joystick_state.touch_state = Some(TouchState {
                         id: touch.id(),
                         is_mouse: false,
@@ -72,7 +99,7 @@ pub fn update_input(
             {
                 if let Ok(window) = q_windows.single() {
                     if let Some(mouse_pos) = window.cursor_position() {
-                        if rect.contains(mouse_pos) {
+                        if interaction_rect.contains(mouse_pos) {
                             joystick_state.touch_state = Some(TouchState {
                                 id: 0,
                                 is_mouse: true,

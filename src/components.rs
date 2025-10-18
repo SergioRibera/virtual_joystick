@@ -27,6 +27,12 @@ pub struct VirtualJoystickUIKnob;
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
 pub struct VirtualJoystickUIBackground;
 
+#[derive(Component, Copy, Clone, Debug, Default, Reflect)]
+#[reflect(Component, Default)]
+#[cfg_attr(feature = "inspect", derive(InspectorOptions))]
+#[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
+pub struct JoystickInteractionArea;
+
 #[derive(Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct VirtualJoystickNode<S: VirtualJoystickID> {
