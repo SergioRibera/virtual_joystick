@@ -252,7 +252,7 @@ impl VirtualJoystickBehavior for JoystickFloating {
 
             if distance_squared > max_distance * max_distance {
                 let distance = distance_squared.sqrt();
-                offset = offset * (max_distance / distance);
+                offset *= max_distance / distance;
             }
 
             let mut new_delta2 =
