@@ -217,12 +217,16 @@ impl VirtualJoystickBehavior for JoystickFloating {
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else {
             return;
         };
+
         let base_offset: Vec2;
         let mut assign_base_offset = false;
+        let mut is_just_pressed = false;
+
         if let Some(touch_state) = &joystick_state.touch_state {
             if touch_state.just_pressed {
                 base_offset = touch_state.start - joystick_base_rect.center();
                 assign_base_offset = true;
+                is_just_pressed = true;
             } else {
                 base_offset = joystick_state.base_offset;
             }
@@ -232,28 +236,33 @@ impl VirtualJoystickBehavior for JoystickFloating {
         } else {
             base_offset = joystick_state.base_offset;
         }
+
         if assign_base_offset {
             joystick_state.base_offset = base_offset;
         }
+
         let new_delta: Vec2;
-        if let Some(touch_state) = &joystick_state.touch_state {
+
+        if is_just_pressed {
+            new_delta = Vec2::ZERO;
+        } else if let Some(touch_state) = &joystick_state.touch_state {
             let mut offset = touch_state.current - joystick_base_rect.center();
-            
             let max_distance = joystick_base_rect.half_size().x;
             let distance_squared = offset.length_squared();
-            
+
             if distance_squared > max_distance * max_distance {
                 let distance = distance_squared.sqrt();
                 offset = offset * (max_distance / distance);
             }
-            
-            let mut new_delta2 = (offset / joystick_base_rect.half_size())
-                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+
+            let mut new_delta2 =
+                (offset / max_distance).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
             new_delta = Vec2::ZERO;
         }
+
         joystick_state.delta = new_delta;
     }
 }
