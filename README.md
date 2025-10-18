@@ -14,7 +14,7 @@ Aviable and compatible versions
 
 |  bevy  | VirtualJoystick |
 |--------|-----------------|
-|  0.16  |      2.4.0      |
+|  0.16  |      2.5.0      |
 |  0.15  |      2.4.0      |
 |  0.14  |      2.3.0      |
 |  0.13  |      2.2.0      |
