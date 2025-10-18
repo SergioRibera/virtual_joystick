@@ -1,5 +1,7 @@
 examples/***/android/gradle
 examples/***/android/build
 examples/***/android/.gradle
-***/target
+target/
+examples/multiple_joysticks_mobile/target
+examples/simple_mobile/target
 /Cargo.lock
