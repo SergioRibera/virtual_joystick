@@ -165,9 +165,18 @@ impl VirtualJoystickBehavior for JoystickFixed {
         joystick_state.base_offset = Vec2::ZERO;
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - touch_state.start)
-                / joystick_base_rect.half_size())
-            .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut offset = touch_state.current - joystick_base_rect.center();
+
+            let max_distance = joystick_base_rect.half_size().x;
+            let distance_squared = offset.length_squared();
+
+            if distance_squared > max_distance * max_distance {
+                let distance = distance_squared.sqrt();
+                offset = offset * (max_distance / distance);
+            }
+
+            let mut new_delta2 = (offset / joystick_base_rect.half_size())
+                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
@@ -228,9 +237,18 @@ impl VirtualJoystickBehavior for JoystickFloating {
         }
         let new_delta: Vec2;
         if let Some(touch_state) = &joystick_state.touch_state {
-            let mut new_delta2 = ((touch_state.current - touch_state.start)
-                / joystick_base_rect.half_size())
-            .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
+            let mut offset = touch_state.current - joystick_base_rect.center();
+            
+            let max_distance = joystick_base_rect.half_size().x;
+            let distance_squared = offset.length_squared();
+            
+            if distance_squared > max_distance * max_distance {
+                let distance = distance_squared.sqrt();
+                offset = offset * (max_distance / distance);
+            }
+            
+            let mut new_delta2 = (offset / joystick_base_rect.half_size())
+                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
             new_delta = new_delta2;
         } else {
@@ -308,14 +326,17 @@ impl VirtualJoystickBehavior for JoystickDynamic {
         if let Some(touch_state) = &joystick_state.touch_state {
             let mut offset = touch_state.current
                 - (joystick_rect.min + base_offset + joystick_base_rect.half_size());
-            if offset.length_squared()
-                > joystick_base_rect_half_size.x * joystick_base_rect_half_size.x
-            {
-                let adjustment =
-                    offset - offset * (joystick_base_rect_half_size.x / offset.length());
-                offset += adjustment;
-                new_base_offset = Some(base_offset + adjustment);
+
+            let max_distance = joystick_base_rect_half_size.x;
+            let distance_squared = offset.length_squared();
+
+            if distance_squared > max_distance * max_distance {
+                let distance = distance_squared.sqrt();
+                offset = offset * (max_distance / distance);
+                new_base_offset =
+                    Some(base_offset + (offset - (offset * (max_distance / distance))));
             }
+
             let mut new_delta2 = (offset / joystick_base_rect_half_size)
                 .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
             new_delta2.y = -new_delta2.y;
