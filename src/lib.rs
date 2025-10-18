@@ -127,7 +127,7 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
         &self.value
     }
 
-    /// Delta value ranging from 0 to 1 in each vector (x and y)
+    /// Delta value ranging from -1 to 1 in each vector (x and y)
     pub fn axis(&self) -> &Vec2 {
         &self.delta
     }
