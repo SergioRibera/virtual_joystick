@@ -63,16 +63,14 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update_joystick(
-    mut joystick: EventReader<VirtualJoystickEvent<String>>,
-    mut player: Query<(&mut Transform, &Player)>,
+    mut reader: MessageReader<VirtualJoystickMessage<String>>,
+    player: Single<(&mut Transform, &Player)>,
     time_step: Res<Time>,
 ) {
-    let Ok((mut player, player_data)) = player.single_mut() else {
-        return;
-    };
+    let (mut player, player_data) = player.into_inner();
 
-    for j in joystick.read() {
-        let Vec2 { x, y } = j.axis();
+    for joystick in reader.read() {
+        let Vec2 { x, y } = joystick.axis();
         player.translation.x += x * player_data.0 * time_step.delta_secs();
         player.translation.y += y * player_data.0 * time_step.delta_secs();
     }

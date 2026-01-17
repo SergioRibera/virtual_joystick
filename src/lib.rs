@@ -1,8 +1,6 @@
 use std::{hash::Hash, marker::PhantomData};
 
-use bevy::{
-    ecs::schedule::ScheduleLabel, prelude::*, reflect::GetTypeRegistration, reflect::TypePath,
-};
+use bevy::{prelude::*, reflect::GetTypeRegistration, reflect::TypePath};
 
 mod action;
 mod behavior;
@@ -22,29 +20,17 @@ pub use components::{
 };
 use systems::{
     update_action, update_behavior, update_behavior_constraints, update_behavior_knob_delta,
-    update_fire_events, update_input, update_missing_state, update_ui,
+    update_input, update_missing_state, update_send_messages, update_ui,
 };
 pub use utils::create_joystick;
-
-#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct UpdateKnobDelta;
-
-#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct ConstrainKnobDelta;
-
-#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct FireEvents;
-
-#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
-pub struct UpdateUI;
 
 #[derive(Default)]
 pub struct VirtualJoystickPlugin<S> {
     _marker: PhantomData<S>,
 }
 
-#[derive(Event)]
-pub enum InputEvent {
+#[derive(Message)]
+pub enum InputMessage {
     StartDrag { id: u64, pos: Vec2, is_mouse: bool },
     Dragging { id: u64, pos: Vec2, is_mouse: bool },
     EndDrag { id: u64, pos: Vec2, is_mouse: bool },
@@ -75,9 +61,9 @@ impl<S: VirtualJoystickID + GetTypeRegistration + bevy::reflect::Typed> Plugin
 {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.register_type::<VirtualJoystickNode<S>>()
-            .register_type::<VirtualJoystickEventType>()
-            .add_event::<VirtualJoystickEvent<S>>()
-            .add_event::<InputEvent>()
+            .register_type::<VirtualJoystickMessageType>()
+            .add_message::<VirtualJoystickMessage<S>>()
+            .add_message::<InputMessage>()
             .add_systems(
                 PreUpdate,
                 (
@@ -85,40 +71,62 @@ impl<S: VirtualJoystickID + GetTypeRegistration + bevy::reflect::Typed> Plugin
                     update_input.after(update_missing_state::<S>),
                 ),
             )
-            .add_systems(UpdateKnobDelta, update_behavior_knob_delta::<S>)
-            .add_systems(ConstrainKnobDelta, update_behavior_constraints::<S>)
-            .add_systems(FireEvents, update_fire_events::<S>)
-            .add_systems(
-                UpdateUI,
-                (update_behavior::<S>, update_action::<S>, update_ui),
+            .configure_sets(
+                PostUpdate,
+                (
+                    JoystickSystems::UpdateKnobDelta,
+                    JoystickSystems::ConstrainKnobDelta,
+                    JoystickSystems::SendMessages,
+                    JoystickSystems::UpdateUI,
+                )
+                    .chain(),
             )
-            .add_systems(Update, |world: &mut World| {
-                world.run_schedule(UpdateKnobDelta);
-                world.run_schedule(ConstrainKnobDelta);
-                world.run_schedule(FireEvents);
-                world.run_schedule(UpdateUI);
-            });
+            .add_systems(
+                PostUpdate,
+                update_behavior_knob_delta::<S>.in_set(JoystickSystems::UpdateKnobDelta),
+            )
+            .add_systems(
+                PostUpdate,
+                update_behavior_constraints::<S>.in_set(JoystickSystems::ConstrainKnobDelta),
+            )
+            .add_systems(
+                PostUpdate,
+                update_send_messages::<S>.in_set(JoystickSystems::SendMessages),
+            )
+            .add_systems(
+                PostUpdate,
+                (update_behavior::<S>, update_action::<S>, update_ui)
+                    .in_set(JoystickSystems::UpdateUI),
+            );
     }
+}
+
+#[derive(SystemSet, Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
+pub enum JoystickSystems {
+    UpdateKnobDelta,
+    ConstrainKnobDelta,
+    SendMessages,
+    UpdateUI,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Reflect)]
 #[reflect]
-pub enum VirtualJoystickEventType {
+pub enum VirtualJoystickMessageType {
     Press,
     Drag,
     Up,
 }
 
-#[derive(Event, Debug)]
-pub struct VirtualJoystickEvent<S: VirtualJoystickID> {
-    id: S,
-    event: VirtualJoystickEventType,
-    value: Vec2,
-    delta: Vec2,
+#[derive(Message, Debug)]
+pub struct VirtualJoystickMessage<S: VirtualJoystickID> {
+    pub id: S,
+    pub message_type: VirtualJoystickMessageType,
+    pub value: Vec2,
+    pub delta: Vec2,
 }
 
-impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
-    /// Get ID of joystick throw event
+impl<S: VirtualJoystickID> VirtualJoystickMessage<S> {
+    /// Get ID of `VirtualJoystickMessage`
     pub fn id(&self) -> S {
         self.id.clone()
     }
@@ -132,9 +140,9 @@ impl<S: VirtualJoystickID> VirtualJoystickEvent<S> {
         &self.delta
     }
 
-    /// Return the Type of Joystick Event
-    pub fn get_type(&self) -> VirtualJoystickEventType {
-        self.event
+    /// Return the Type of `VirtualJoystickMessage`
+    pub fn get_type(&self) -> VirtualJoystickMessageType {
+        self.message_type
     }
 
     /// Delta value snaped

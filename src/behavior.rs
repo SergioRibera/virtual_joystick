@@ -2,12 +2,10 @@ use std::sync::Arc;
 
 use bevy::{
     ecs::{entity::Entity, world::World},
-    math::{Rect, Vec2, Vec3Swizzles},
-    prelude::Children,
+    math::{Rect, Vec2},
+    prelude::{Children, Visibility},
     reflect::Reflect,
-    render::view::Visibility,
-    transform::components::GlobalTransform,
-    ui::ComputedNode,
+    ui::{ComputedNode, UiGlobalTransform},
 };
 use variadics_please::all_tuples;
 
@@ -146,11 +144,11 @@ impl VirtualJoystickBehavior for JoystickFixed {
             let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
                 continue;
             };
-            let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else {
+            let Some(joystick_base_global_transform) = world.get::<UiGlobalTransform>(child) else {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy(),
+                joystick_base_global_transform.translation,
                 joystick_base_node.size(),
             );
             joystick_base_rect = Some(rect);
@@ -172,7 +170,7 @@ impl VirtualJoystickBehavior for JoystickFixed {
 
             if distance_squared > max_distance * max_distance {
                 let distance = distance_squared.sqrt();
-                offset = offset * (max_distance / distance);
+                offset *= max_distance / distance;
             }
 
             let mut new_delta2 = (offset / joystick_base_rect.half_size())
@@ -200,11 +198,11 @@ impl VirtualJoystickBehavior for JoystickFloating {
             let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
                 continue;
             };
-            let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else {
+            let Some(joystick_base_global_transform) = world.get::<UiGlobalTransform>(child) else {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy()
+                joystick_base_global_transform.translation
                     * joystick_base_node.inverse_scale_factor(),
                 joystick_base_node.size() * joystick_base_node.inverse_scale_factor,
             );
@@ -274,13 +272,11 @@ impl VirtualJoystickBehavior for JoystickDynamic {
             let Some(joystick_node) = world.get::<ComputedNode>(entity) else {
                 return;
             };
-            let Some(joystick_global_transform) = world.get::<GlobalTransform>(entity) else {
+            let Some(joystick_global_transform) = world.get::<UiGlobalTransform>(entity) else {
                 return;
             };
-            joystick_rect = Rect::from_center_size(
-                joystick_global_transform.translation().xy(),
-                joystick_node.size(),
-            );
+            joystick_rect =
+                Rect::from_center_size(joystick_global_transform.translation, joystick_node.size());
         }
         let mut joystick_base_rect: Option<Rect> = None;
         let Some(children) = world.get::<Children>(entity) else {
@@ -294,11 +290,11 @@ impl VirtualJoystickBehavior for JoystickDynamic {
             let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
                 continue;
             };
-            let Some(joystick_base_global_transform) = world.get::<GlobalTransform>(child) else {
+            let Some(joystick_base_global_transform) = world.get::<UiGlobalTransform>(child) else {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy(),
+                joystick_base_global_transform.translation,
                 joystick_base_node.size(),
             );
             joystick_base_rect = Some(rect);
@@ -341,7 +337,7 @@ impl VirtualJoystickBehavior for JoystickDynamic {
 
             if distance_squared > max_distance * max_distance {
                 let distance = distance_squared.sqrt();
-                offset = offset * (max_distance / distance);
+                offset *= max_distance / distance;
                 new_base_offset =
                     Some(base_offset + (offset - (offset * (max_distance / distance))));
             }
