@@ -12,15 +12,16 @@ Create and use a Virtual Joystick in a UI for [bevy](https://bevyengine.org/) Ga
 # Versions
 Aviable and compatible versions
 
-|  bevy  | VirtualJoystick |
-|--------|-----------------|
-|  0.16  |      2.5.3      |
-|  0.15  |      2.4.0      |
-|  0.14  |      2.3.0      |
-|  0.13  |      2.2.0      |
-|  0.12  |      2.1.0      |
-|  0.11  |      2.0.1      |
-| 0.10.1 |      1.1.2      |
+| bevy   | VirtualJoystick |
+| ------ | --------------- |
+| 0.17   | 2.6.0           |
+| 0.16   | 2.5.3           |
+| 0.15   | 2.4.0           |
+| 0.14   | 2.3.0           |
+| 0.13   | 2.2.0           |
+| 0.12   | 2.1.0           |
+| 0.11   | 2.0.1           |
+| 0.10.1 | 1.1.2           |
 
 # Features
 - Support Mouse and Touch
