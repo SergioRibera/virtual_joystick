@@ -16,7 +16,8 @@ pub use behavior::{
 };
 pub use bundles::VirtualJoystickBundle;
 pub use components::{
-    VirtualJoystickNode, VirtualJoystickState, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
+    VirtualJoystickInteractionArea, VirtualJoystickNode, VirtualJoystickState,
+    VirtualJoystickUIBackground, VirtualJoystickUIKnob,
 };
 use systems::{
     update_action, update_behavior, update_behavior_constraints, update_behavior_knob_delta,

@@ -17,8 +17,8 @@ use bevy::{
 
 use crate::{
     components::{
-        JoystickInteractionArea, TouchState, VirtualJoystickState, VirtualJoystickUIBackground,
-        VirtualJoystickUIKnob,
+        TouchState, VirtualJoystickInteractionArea, VirtualJoystickState,
+        VirtualJoystickUIBackground, VirtualJoystickUIKnob,
     },
     VirtualJoystickID, VirtualJoystickMessage, VirtualJoystickMessageType, VirtualJoystickNode,
 };
@@ -51,7 +51,7 @@ pub fn update_input(
     children_query: Query<&Children>,
     interaction_area_query: Query<
         (&ComputedNode, &UiGlobalTransform),
-        With<JoystickInteractionArea>,
+        With<VirtualJoystickInteractionArea>,
     >,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
