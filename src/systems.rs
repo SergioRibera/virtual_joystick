@@ -3,16 +3,15 @@ use std::sync::Arc;
 use bevy::{
     ecs::{
         entity::Entity,
-        event::EventWriter,
+        message::MessageWriter,
         query::With,
-        system::{Query, Res},
+        system::{Query, Res, Single},
         world::World,
     },
     input::{mouse::MouseButton, touch::Touches, ButtonInput},
-    math::{Rect, Vec2, Vec3Swizzles},
+    math::{Rect, Vec2},
     prelude::Children,
-    transform::components::GlobalTransform,
-    ui::{ComputedNode, Node, PositionType, Val},
+    ui::{ComputedNode, Node, PositionType, UiGlobalTransform, Val},
     window::{PrimaryWindow, Window},
 };
 
@@ -21,7 +20,7 @@ use crate::{
         TouchState, VirtualJoystickInteractionArea, VirtualJoystickState,
         VirtualJoystickUIBackground, VirtualJoystickUIKnob,
     },
-    VirtualJoystickEvent, VirtualJoystickEventType, VirtualJoystickID, VirtualJoystickNode,
+    VirtualJoystickID, VirtualJoystickMessage, VirtualJoystickMessageType, VirtualJoystickNode,
 };
 use bevy::ecs::query::Without;
 
@@ -42,23 +41,23 @@ pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
 }
 
 pub fn update_input(
-    mut joysticks: Query<(
+    window: Single<&Window, With<PrimaryWindow>>,
+    joystick_query: Query<(
         Entity,
         &ComputedNode,
-        &GlobalTransform,
+        &UiGlobalTransform,
         &mut VirtualJoystickState,
     )>,
-    mouse_buttons: Res<ButtonInput<MouseButton>>,
-    touches: Res<Touches>,
-    q_windows: Query<&Window, With<PrimaryWindow>>,
     children_query: Query<&Children>,
-    interaction_areas: Query<
-        (&ComputedNode, &GlobalTransform),
+    interaction_area_query: Query<
+        (&ComputedNode, &UiGlobalTransform),
         With<VirtualJoystickInteractionArea>,
     >,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    touches: Res<Touches>,
 ) {
     for (joystick_entity, joystick_node, joystick_global_transform, mut joystick_state) in
-        &mut joysticks
+        joystick_query
     {
         joystick_state.just_released = false;
         if let Some(touch_state) = &mut joystick_state.touch_state {
@@ -68,9 +67,9 @@ pub fn update_input(
         let mut interaction_rect: Option<Rect> = None;
         if let Ok(children) = children_query.get(joystick_entity) {
             for &child in children.iter() {
-                if let Ok((node, transform)) = interaction_areas.get(child) {
+                if let Ok((node, transform)) = interaction_area_query.get(child) {
                     interaction_rect = Some(Rect::from_center_size(
-                        transform.translation().xy() * node.inverse_scale_factor(),
+                        transform.translation * node.inverse_scale_factor(),
                         node.size() * node.inverse_scale_factor(),
                     ));
                     break;
@@ -80,7 +79,7 @@ pub fn update_input(
 
         let interaction_rect = interaction_rect.unwrap_or_else(|| {
             Rect::from_center_size(
-                joystick_global_transform.translation().xy() * joystick_node.inverse_scale_factor(),
+                joystick_global_transform.translation * joystick_node.inverse_scale_factor(),
                 joystick_node.size() * joystick_node.inverse_scale_factor(),
             )
         });
@@ -100,17 +99,15 @@ pub fn update_input(
             }
             if joystick_state.touch_state.is_none() && mouse_buttons.just_pressed(MouseButton::Left)
             {
-                if let Ok(window) = q_windows.single() {
-                    if let Some(mouse_pos) = window.cursor_position() {
-                        if interaction_rect.contains(mouse_pos) {
-                            joystick_state.touch_state = Some(TouchState {
-                                id: 0,
-                                is_mouse: true,
-                                start: mouse_pos,
-                                current: mouse_pos,
-                                just_pressed: true,
-                            });
-                        }
+                if let Some(mouse_pos) = window.cursor_position() {
+                    if interaction_rect.contains(mouse_pos) {
+                        joystick_state.touch_state = Some(TouchState {
+                            id: 0,
+                            is_mouse: true,
+                            start: mouse_pos,
+                            current: mouse_pos,
+                            just_pressed: true,
+                        });
                     }
                 }
             }
@@ -130,11 +127,9 @@ pub fn update_input(
                 joystick_state.just_released = true;
             } else if let Some(touch_state) = &mut joystick_state.touch_state {
                 if touch_state.is_mouse {
-                    if let Ok(window) = q_windows.single() {
-                        if let Some(new_current) = window.cursor_position() {
-                            if new_current != touch_state.current {
-                                touch_state.current = new_current;
-                            }
+                    if let Some(new_current) = window.cursor_position() {
+                        if new_current != touch_state.current {
+                            touch_state.current = new_current;
                         }
                     }
                 } else if let Some(touch) = touches.get_pressed(touch_state.id) {
@@ -265,15 +260,15 @@ pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
     }
 }
 
-pub fn update_fire_events<S: VirtualJoystickID>(
-    joysticks: Query<(&VirtualJoystickNode<S>, &VirtualJoystickState)>,
-    mut send_values: EventWriter<VirtualJoystickEvent<S>>,
+pub fn update_send_messages<S: VirtualJoystickID>(
+    joystick_query: Query<(&VirtualJoystickNode<S>, &VirtualJoystickState)>,
+    mut writer: MessageWriter<VirtualJoystickMessage<S>>,
 ) {
-    for (joystick, joystick_state) in &joysticks {
+    for (joystick, joystick_state) in joystick_query {
         if joystick_state.just_released {
-            send_values.write(VirtualJoystickEvent {
+            writer.write(VirtualJoystickMessage {
                 id: joystick.id.clone(),
-                event: VirtualJoystickEventType::Up,
+                message_type: VirtualJoystickMessageType::Up,
                 value: Vec2::ZERO,
                 delta: joystick_state.delta,
             });
@@ -281,16 +276,16 @@ pub fn update_fire_events<S: VirtualJoystickID>(
         }
         if let Some(touch_state) = &joystick_state.touch_state {
             if touch_state.just_pressed {
-                send_values.write(VirtualJoystickEvent {
+                writer.write(VirtualJoystickMessage {
                     id: joystick.id.clone(),
-                    event: VirtualJoystickEventType::Press,
+                    message_type: VirtualJoystickMessageType::Press,
                     value: touch_state.current,
                     delta: joystick_state.delta,
                 });
             }
-            send_values.write(VirtualJoystickEvent {
+            writer.write(VirtualJoystickMessage {
                 id: joystick.id.clone(),
-                event: VirtualJoystickEventType::Drag,
+                message_type: VirtualJoystickMessageType::Drag,
                 value: touch_state.current,
                 delta: joystick_state.delta,
             });
@@ -300,31 +295,31 @@ pub fn update_fire_events<S: VirtualJoystickID>(
 
 #[allow(clippy::complexity)]
 pub fn update_ui(
-    joysticks: Query<(&VirtualJoystickState, &Children)>,
-    mut joystick_bases: Query<
-        (&mut Node, &ComputedNode, &GlobalTransform),
+    mut joystick_base_query: Query<
+        (&mut Node, &ComputedNode, &UiGlobalTransform),
         With<VirtualJoystickUIBackground>,
     >,
-    mut joystick_knobs: Query<
-        (&mut Node, &ComputedNode, &GlobalTransform),
+    mut joystick_knob_query: Query<
+        (&mut Node, &ComputedNode, &UiGlobalTransform),
         (
             With<VirtualJoystickUIKnob>,
             Without<VirtualJoystickUIBackground>,
         ),
     >,
+    joystick_query: Query<(&VirtualJoystickState, &Children)>,
 ) {
-    for (joystick_state, children) in &joysticks {
+    for (joystick_state, children) in joystick_query {
         let mut joystick_base_rect: Option<Rect> = None;
         for child in children.iter() {
-            if joystick_bases.contains(*child) {
+            if joystick_base_query.contains(*child) {
                 let (mut joystick_base_style, joystick_base_node, joystick_base_global_transform) =
-                    joystick_bases.get_mut(*child).unwrap();
+                    joystick_base_query.get_mut(*child).unwrap();
                 joystick_base_style.position_type = PositionType::Absolute;
                 joystick_base_style.left = Val::Px(joystick_state.base_offset.x);
                 joystick_base_style.top = Val::Px(joystick_state.base_offset.y);
 
                 let rect = Rect::from_center_size(
-                    joystick_base_global_transform.translation().xy()
+                    joystick_base_global_transform.translation
                         * joystick_base_node.inverse_scale_factor,
                     joystick_base_node.size() * joystick_base_node.inverse_scale_factor,
                 );
@@ -337,11 +332,11 @@ pub fn update_ui(
         let joystick_base_rect = joystick_base_rect.unwrap();
         let joystick_base_rect_half_size = joystick_base_rect.half_size();
         for child in children.iter() {
-            if joystick_knobs.contains(*child) {
+            if joystick_knob_query.contains(*child) {
                 let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) =
-                    joystick_knobs.get_mut(*child).unwrap();
+                    joystick_knob_query.get_mut(*child).unwrap();
                 let joystick_knob_rect = Rect::from_center_size(
-                    joystick_knob_global_transform.translation().xy()
+                    joystick_knob_global_transform.translation
                         * joystick_knob_node.inverse_scale_factor,
                     joystick_knob_node.size() * joystick_knob_node.inverse_scale_factor,
                 );

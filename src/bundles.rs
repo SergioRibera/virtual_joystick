@@ -1,9 +1,7 @@
 use bevy::{
     ecs::bundle::Bundle,
-    prelude::default,
-    render::view::{InheritedVisibility, ViewVisibility, Visibility},
-    transform::components::{GlobalTransform, Transform},
-    ui::{ComputedNode, Node, ZIndex},
+    prelude::{default, InheritedVisibility, ViewVisibility, Visibility},
+    ui::{ComputedNode, Node, UiGlobalTransform, UiTransform, ZIndex},
 };
 
 use crate::{VirtualJoystickID, VirtualJoystickNode};
@@ -17,9 +15,9 @@ pub struct VirtualJoystickBundle<S: VirtualJoystickID> {
     /// The texture atlas image of the node
     pub(crate) joystick: VirtualJoystickNode<S>,
     /// The transform of the node
-    pub(crate) transform: Transform,
+    pub(crate) transform: UiTransform,
     /// The global transform of the node
-    pub(crate) global_transform: GlobalTransform,
+    pub(crate) global_transform: UiGlobalTransform,
     /// Describes the visibility properties of the node
     pub visibility: Visibility,
     /// Inherited visibility of an entity.
@@ -48,12 +46,12 @@ impl<S: VirtualJoystickID> VirtualJoystickBundle<S> {
         self
     }
 
-    pub fn set_transform(mut self, transform: Transform) -> Self {
+    pub fn set_transform(mut self, transform: UiTransform) -> Self {
         self.transform = transform;
         self
     }
 
-    pub fn set_global_transform(mut self, global_transform: GlobalTransform) -> Self {
+    pub fn set_global_transform(mut self, global_transform: UiGlobalTransform) -> Self {
         self.global_transform = global_transform;
         self
     }

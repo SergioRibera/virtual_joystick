@@ -14,9 +14,7 @@ enum JoystickController {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(EguiPlugin {
-            enable_multipass_for_primary_context: true,
-        })
+        .add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VirtualJoystickPlugin::<JoystickController>::default())
         .add_systems(Startup, create_scene)
@@ -90,18 +88,16 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update_joystick(
-    mut joystick: EventReader<VirtualJoystickEvent<JoystickController>>,
-    mut player: Query<(&mut Transform, &Player)>,
+    mut reader: MessageReader<VirtualJoystickMessage<JoystickController>>,
+    player: Single<(&mut Transform, &Player)>,
     time_step: Res<Time>,
 ) {
-    let Ok((mut player, player_data)) = player.single_mut() else {
-        return;
-    };
+    let (mut player, player_data) = player.into_inner();
 
-    for j in joystick.read() {
-        let Vec2 { x, y } = j.snap_axis(None);
+    for joystick in reader.read() {
+        let Vec2 { x, y } = joystick.snap_axis(None);
 
-        match j.id() {
+        match joystick.id() {
             JoystickController::MovementX => {
                 player.translation.x += x * player_data.0 * time_step.delta_secs();
             }
