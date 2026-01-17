@@ -120,10 +120,10 @@ pub enum VirtualJoystickMessageType {
 
 #[derive(Message, Debug)]
 pub struct VirtualJoystickMessage<S: VirtualJoystickID> {
-    pub id: S,
-    pub message_type: VirtualJoystickMessageType,
-    pub value: Vec2,
-    pub delta: Vec2,
+    id: S,
+    message_type: VirtualJoystickMessageType,
+    value: Vec2,
+    delta: Vec2,
 }
 
 impl<S: VirtualJoystickID> VirtualJoystickMessage<S> {
