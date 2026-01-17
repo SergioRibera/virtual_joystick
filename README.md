@@ -28,7 +28,7 @@ Aviable and compatible versions
 - Easy usage
 - Multiple Joysticks on screen
 - Multiple types of joystick behaviour
-- Track (Messages)[https://docs.rs/bevy/latest/bevy/prelude/trait.Message.html] on Joystick (Press, Drag and Up)
+- Track [Messages](https://docs.rs/bevy/latest/bevy/prelude/trait.Message.html) on Joystick (Press, Drag and Up)
 - Support Axis block (Horizontal, Vertical or Both)
 
 > **NOTE:** To compile android projects you can use [cargo-apk](https://crates.io/crates/cargo-apk) or the [docker-rust-android](https://github.com/SergioRibera/docker-rust-android) project container where you don't have to install or prepare any sdk, for more details see the readme of the mobile projects
