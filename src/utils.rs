@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::JoystickInteractionArea;
+use crate::components::VirtualJoystickInteractionArea;
 use crate::{
     VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickBundle, VirtualJoystickID,
     VirtualJoystickNode, VirtualJoystickUIBackground, VirtualJoystickUIKnob,
@@ -129,7 +129,7 @@ pub fn create_joystick<I: VirtualJoystickID>(
     spawn.with_children(|parent| {
         // Interaction Area
         parent.spawn((
-            JoystickInteractionArea,
+            VirtualJoystickInteractionArea,
             Node {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
