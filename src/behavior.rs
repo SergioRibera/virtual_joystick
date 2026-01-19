@@ -188,7 +188,7 @@ impl VirtualJoystickBehavior for JoystickDynamic {
 
 impl VirtualJoystickBehavior for JoystickFloating {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
-        let Some(joystick_base_rect) = joystick_base_rect_scaled(&*world, entity) else {
+        let Some(joystick_base_rect) = joystick_base_rect(&*world, entity) else {
             return;
         };
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else {
@@ -215,47 +215,24 @@ impl VirtualJoystickBehavior for JoystickFloating {
 fn joystick_rect(world: &World, entity: Entity) -> Option<Rect> {
     let node = world.get::<ComputedNode>(entity)?;
     let transform = world.get::<UiGlobalTransform>(entity)?;
-
-    Some(Rect::from_center_size(transform.translation, node.size()))
-}
-
-/// The [`Rect`] of the joystick base returned as an [`Option`].
-///
-/// Compared to [`joystick_rect`], this gives the [`Rect`] of the associated [`VirtualJoystickUIBackground`], which
-/// is part of a child [`Entity`] of the joystick.
-fn joystick_base_rect(world: &World, entity: Entity) -> Option<Rect> {
-    let (translation, node) = joystick_base_rect_params(world, entity)?;
-
-    Some(Rect::from_center_size(translation, node.size()))
-}
-
-/// The scaled [`Rect`] of the joystick base returned as an [`Option`].
-///
-/// Compared to [`joystick_base_rect`], this just scales the [`Rect`] by [`ComputedNode::inverse_scale_factor`]
-/// which is needed to get the logical coordinates.
-///
-/// Compared to [`joystick_rect`], this gives the [`Rect`] of the associated [`VirtualJoystickUIBackground`], which
-/// is part of a child [`Entity`] of the joystick.
-fn joystick_base_rect_scaled(world: &World, entity: Entity) -> Option<Rect> {
-    let (translation, node) = joystick_base_rect_params(world, entity)?;
     let factor = node.inverse_scale_factor;
 
     Some(Rect::from_center_size(
-        translation * factor,
+        transform.translation * factor,
         node.size() * factor,
     ))
 }
 
-/// Parameters for the base [`Rect`].
-fn joystick_base_rect_params(world: &World, entity: Entity) -> Option<(Vec2, &ComputedNode)> {
+/// The [`Rect`] of the joystick base returned as an [`Option`].
+///
+/// It is scaled by [`ComputedNode::inverse_scale_factor`] which
+/// is needed to get the logical coordinates.
+fn joystick_base_rect(world: &World, entity: Entity) -> Option<Rect> {
     let children = world.get::<Children>(entity)?;
     let base = children
         .iter()
         .find(|entity| world.get::<VirtualJoystickUIBackground>(**entity).is_some())?;
-    let node = world.get::<ComputedNode>(*base)?;
-    let transform = world.get::<UiGlobalTransform>(*base)?;
-
-    Some((transform.translation, node))
+    joystick_rect(world, *base)
 }
 
 /// Update [`VirtualJoystickState::base_offset`] and return the associated [`TouchState`] as an [`Option`].
