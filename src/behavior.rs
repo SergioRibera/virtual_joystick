@@ -10,8 +10,8 @@ use bevy::{
 use variadics_please::all_tuples;
 
 use crate::{
-    components::{TouchState, VirtualJoystickState},
     VirtualJoystickUIBackground,
+    components::{TouchState, VirtualJoystickState},
 };
 
 pub trait VirtualJoystickBehavior: Send + Sync + 'static {
@@ -297,7 +297,7 @@ fn joystick_delta(rect: Rect, offset: Vec2, is_floating: bool) -> Vec2 {
 
     // Return normalized offset, now also clamped to be between `-1.` and `1.`.
     // NOTE: We are inverting y to align with user intent because `offset` is reversed on the y axis.
-    let Vec2 { x, y } = (offset / normalizer).clamp(Vec2::splat(-1.), Vec2::splat(1.));
+    let Vec2 { x, y } = (offset / normalizer).clamp(Vec2::NEG_ONE, Vec2::ONE);
     Vec2::new(x, -y)
 }
 

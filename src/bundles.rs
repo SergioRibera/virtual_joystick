@@ -1,6 +1,6 @@
 use bevy::{
     ecs::bundle::Bundle,
-    prelude::{default, InheritedVisibility, ViewVisibility, Visibility},
+    prelude::{InheritedVisibility, ViewVisibility, Visibility, default},
     ui::{ComputedNode, Node, UiGlobalTransform, UiTransform, ZIndex},
 };
 

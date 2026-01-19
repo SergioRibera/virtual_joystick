@@ -43,17 +43,17 @@ pub trait VirtualJoystickID:
 }
 
 impl<
-        S: Hash
-            + Sync
-            + Send
-            + Clone
-            + std::fmt::Debug
-            + Default
-            + Reflect
-            + FromReflect
-            + TypePath
-            + 'static,
-    > VirtualJoystickID for S
+    S: Hash
+        + Sync
+        + Send
+        + Clone
+        + std::fmt::Debug
+        + Default
+        + Reflect
+        + FromReflect
+        + TypePath
+        + 'static,
+> VirtualJoystickID for S
 {
 }
 

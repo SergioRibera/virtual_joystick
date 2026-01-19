@@ -3,16 +3,16 @@ use std::sync::Arc;
 use bevy::{
     ecs::{component::Component, reflect::ReflectComponent},
     prelude::Vec2,
-    reflect::{std_traits::ReflectDefault, Reflect},
+    reflect::{Reflect, std_traits::ReflectDefault},
 };
 #[cfg(feature = "inspect")]
-use bevy_inspector_egui::prelude::ReflectInspectorOptions;
-#[cfg(feature = "inspect")]
 use bevy_inspector_egui::InspectorOptions;
+#[cfg(feature = "inspect")]
+use bevy_inspector_egui::prelude::ReflectInspectorOptions;
 
 use crate::{
-    action::NoAction, behavior::JoystickFloating, VirtualJoystickAction, VirtualJoystickBehavior,
-    VirtualJoystickID,
+    VirtualJoystickAction, VirtualJoystickBehavior, VirtualJoystickID, action::NoAction,
+    behavior::JoystickFloating,
 };
 
 #[derive(Component, Copy, Clone, Debug, Default, Reflect)]
@@ -95,4 +95,33 @@ pub struct TouchState {
     pub start: Vec2,
     pub current: Vec2,
     pub just_pressed: bool,
+}
+
+impl TouchState {
+    /// Set new [`Self::current`].
+    pub fn set_new_current(&mut self, new_current: Vec2) {
+        if self.current != new_current {
+            self.current = new_current;
+        }
+    }
+    /// Initialize as touch state from touch position.
+    pub fn from_touch_pos(id: u64, pos: Vec2) -> Self {
+        Self {
+            id,
+            is_mouse: false,
+            start: pos,
+            current: pos,
+            just_pressed: true,
+        }
+    }
+    /// Initialize as mouse state from mouse position.
+    pub fn from_mouse_pos(id: u64, pos: Vec2) -> Self {
+        Self {
+            id,
+            is_mouse: true,
+            start: pos,
+            current: pos,
+            just_pressed: true,
+        }
+    }
 }
