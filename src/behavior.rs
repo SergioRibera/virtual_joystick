@@ -2,14 +2,17 @@ use std::sync::Arc;
 
 use bevy::{
     ecs::{entity::Entity, world::World},
-    math::{Rect, Vec2},
+    math::{FloatPow, Rect, Vec2},
     prelude::{Children, Visibility},
     reflect::Reflect,
     ui::{ComputedNode, UiGlobalTransform},
 };
 use variadics_please::all_tuples;
 
-use crate::{components::VirtualJoystickState, VirtualJoystickUIBackground};
+use crate::{
+    VirtualJoystickUIBackground,
+    components::{TouchState, VirtualJoystickState},
+};
 
 pub trait VirtualJoystickBehavior: Send + Sync + 'static {
     fn update_at_delta_stage(&self, _world: &mut World, _entity: Entity) {}
@@ -132,230 +135,161 @@ impl VirtualJoystickBehavior for JoystickInvisible {
 
 impl VirtualJoystickBehavior for JoystickFixed {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
-        let mut joystick_base_rect: Option<Rect> = None;
-        let Some(children) = world.get::<Children>(entity) else {
-            return;
-        };
-
-        for &child in children.iter() {
-            if world.get::<VirtualJoystickUIBackground>(child).is_none() {
-                continue;
-            }
-            let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
-                continue;
-            };
-            let Some(joystick_base_global_transform) = world.get::<UiGlobalTransform>(child) else {
-                continue;
-            };
-            let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation
-                    * joystick_base_node.inverse_scale_factor(),
-                joystick_base_node.size() * joystick_base_node.inverse_scale_factor(),
-            );
-            joystick_base_rect = Some(rect);
-            break;
-        }
-        let Some(joystick_base_rect) = joystick_base_rect else {
+        let Some(joystick_base_rect) = joystick_base_rect(&*world, entity) else {
             return;
         };
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else {
             return;
         };
+
         joystick_state.base_offset = Vec2::ZERO;
-        let new_delta: Vec2;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            let mut offset = touch_state.current - joystick_base_rect.center();
 
-            let max_distance = joystick_base_rect.half_size().x;
-            let distance_squared = offset.length_squared();
-
-            if distance_squared > max_distance * max_distance {
-                let distance = distance_squared.sqrt();
-                offset *= max_distance / distance;
-            }
-
-            let mut new_delta2 = (offset / joystick_base_rect.half_size())
-                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
-            new_delta2.y = -new_delta2.y;
-            new_delta = new_delta2;
-        } else {
-            new_delta = Vec2::ZERO;
-        }
-        joystick_state.delta = new_delta;
-    }
-}
-
-impl VirtualJoystickBehavior for JoystickFloating {
-    fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
-        let mut joystick_base_rect: Option<Rect> = None;
-        let Some(children) = world.get::<Children>(entity) else {
+        // Return if `touch_state` is `None` and set delta to `ZERO`.
+        let Some(touch_state) = &joystick_state.touch_state else {
+            joystick_state.delta = Vec2::ZERO;
             return;
         };
 
-        for &child in children.iter() {
-            if world.get::<VirtualJoystickUIBackground>(child).is_none() {
-                continue;
-            }
-            let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
-                continue;
-            };
-            let Some(joystick_base_global_transform) = world.get::<UiGlobalTransform>(child) else {
-                continue;
-            };
-            let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation
-                    * joystick_base_node.inverse_scale_factor(),
-                joystick_base_node.size() * joystick_base_node.inverse_scale_factor(),
-            );
-            joystick_base_rect = Some(rect);
-            break;
-        }
-        let Some(joystick_base_rect) = joystick_base_rect else {
-            return;
-        };
-        let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else {
-            return;
-        };
-
-        let base_offset: Vec2;
-        let mut assign_base_offset = false;
-        let mut is_just_pressed = false;
-
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
-                base_offset = touch_state.start - joystick_base_rect.center();
-                assign_base_offset = true;
-                is_just_pressed = true;
-            } else {
-                base_offset = joystick_state.base_offset;
-            }
-        } else if joystick_state.just_released {
-            base_offset = Vec2::ZERO;
-            assign_base_offset = true;
-        } else {
-            base_offset = joystick_state.base_offset;
-        }
-
-        if assign_base_offset {
-            joystick_state.base_offset = base_offset;
-        }
-
-        let new_delta: Vec2;
-
-        if is_just_pressed {
-            new_delta = Vec2::ZERO;
-        } else if let Some(touch_state) = &joystick_state.touch_state {
-            let mut offset = touch_state.current - joystick_base_rect.center();
-            let max_distance = joystick_base_rect.half_size().x;
-            let distance_squared = offset.length_squared();
-
-            if distance_squared > max_distance * max_distance {
-                let distance = distance_squared.sqrt();
-                offset *= max_distance / distance;
-            }
-
-            let mut new_delta2 =
-                (offset / max_distance).clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
-            new_delta2.y = -new_delta2.y;
-            new_delta = new_delta2;
-        } else {
-            new_delta = Vec2::ZERO;
-        }
-
-        joystick_state.delta = new_delta;
+        // Set `joystick_state.delta`.
+        let offset = touch_state.current - joystick_base_rect.center();
+        joystick_state.delta = joystick_delta(joystick_base_rect, offset, false);
     }
 }
 
 impl VirtualJoystickBehavior for JoystickDynamic {
     fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
-        let joystick_rect: Rect;
-        {
-            let Some(joystick_node) = world.get::<ComputedNode>(entity) else {
-                return;
-            };
-            let Some(joystick_global_transform) = world.get::<UiGlobalTransform>(entity) else {
-                return;
-            };
-            joystick_rect = Rect::from_center_size(
-                joystick_global_transform.translation * joystick_node.inverse_scale_factor(),
-                joystick_node.size() * joystick_node.inverse_scale_factor(),
-            );
-        }
-        let mut joystick_base_rect: Option<Rect> = None;
-        let Some(children) = world.get::<Children>(entity) else {
+        let Some(joystick_rect) = joystick_rect(world, entity) else {
             return;
         };
-
-        for &child in children.iter() {
-            if world.get::<VirtualJoystickUIBackground>(child).is_none() {
-                continue;
-            }
-            let Some(joystick_base_node) = world.get::<ComputedNode>(child) else {
-                continue;
-            };
-            let Some(joystick_base_global_transform) = world.get::<UiGlobalTransform>(child) else {
-                continue;
-            };
-            let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation
-                    * joystick_base_node.inverse_scale_factor(),
-                joystick_base_node.size() * joystick_base_node.inverse_scale_factor(),
-            );
-            joystick_base_rect = Some(rect);
-            break;
-        }
-        let Some(joystick_base_rect) = joystick_base_rect else {
+        let Some(joystick_base_rect) = joystick_base_rect(&*world, entity) else {
             return;
         };
         let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else {
             return;
         };
-        let joystick_base_rect_center = joystick_base_rect.center();
-        let joystick_base_rect_half_size = joystick_base_rect.half_size();
-        let base_offset: Vec2;
-        let mut assign_base_offset = false;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
-                base_offset = touch_state.start - joystick_base_rect_center;
-                assign_base_offset = true;
-            } else {
-                base_offset = joystick_state.base_offset;
-            }
-        } else if joystick_state.just_released {
-            base_offset = Vec2::ZERO;
-            assign_base_offset = true;
-        } else {
-            base_offset = joystick_state.base_offset;
-        }
-        if assign_base_offset {
-            joystick_state.base_offset = base_offset;
-        }
-        let new_delta: Vec2;
-        let mut new_base_offset: Option<Vec2> = None;
-        if let Some(touch_state) = &joystick_state.touch_state {
-            let mut offset = touch_state.current
-                - (joystick_rect.min + base_offset + joystick_base_rect.half_size());
 
-            let max_distance = joystick_base_rect_half_size.x;
-            let distance_squared = offset.length_squared();
+        // Return if `touch_state` is `None` and set delta to `ZERO`.
+        let Some(touch_state) = update_base_offset(&mut joystick_state, joystick_base_rect) else {
+            joystick_state.delta = Vec2::ZERO;
+            return;
+        };
 
-            if distance_squared > max_distance * max_distance {
-                let distance = distance_squared.sqrt();
-                offset *= max_distance / distance;
-                new_base_offset =
-                    Some(base_offset + (offset - (offset * (max_distance / distance))));
-            }
+        // Set `joystick_state.delta`.
+        let offset = touch_state.current
+            - (joystick_rect.min + joystick_state.base_offset + joystick_base_rect.half_size());
+        joystick_state.delta = joystick_delta(joystick_base_rect, offset, false);
 
-            let mut new_delta2 = (offset / joystick_base_rect_half_size)
-                .clamp(Vec2::new(-1.0, -1.0), Vec2::new(1.0, 1.0));
-            new_delta2.y = -new_delta2.y;
-            new_delta = new_delta2;
-        } else {
-            new_delta = Vec2::ZERO;
-        }
-        joystick_state.delta = new_delta;
-        if let Some(base_offset) = new_base_offset {
-            joystick_state.base_offset = base_offset;
+        // Calculate appropriate `delta` and add to `joystick_state.base_offset` if appropriate.
+        if let Some(delta) = base_offset_delta(joystick_base_rect, offset) {
+            joystick_state.base_offset += delta;
         }
     }
+}
+
+impl VirtualJoystickBehavior for JoystickFloating {
+    fn update_at_delta_stage(&self, world: &mut World, entity: Entity) {
+        let Some(joystick_base_rect) = joystick_base_rect(&*world, entity) else {
+            return;
+        };
+        let Some(mut joystick_state) = world.get_mut::<VirtualJoystickState>(entity) else {
+            return;
+        };
+
+        // Return if `touch_state` is `None` or `touch_state.just_pressed` and set delta to `ZERO`.
+        let Some(touch_state) = update_base_offset(&mut joystick_state, joystick_base_rect) else {
+            joystick_state.delta = Vec2::ZERO;
+            return;
+        };
+        if touch_state.just_pressed {
+            joystick_state.delta = Vec2::ZERO;
+            return;
+        }
+
+        // Set `joystick_state.delta`.
+        let offset = touch_state.current - joystick_base_rect.center();
+        joystick_state.delta = joystick_delta(joystick_base_rect, offset, true);
+    }
+}
+
+/// The [`Rect`] of the joystick returned as an [`Option`].
+fn joystick_rect(world: &World, entity: Entity) -> Option<Rect> {
+    let node = world.get::<ComputedNode>(entity)?;
+    let transform = world.get::<UiGlobalTransform>(entity)?;
+    let factor = node.inverse_scale_factor;
+
+    Some(Rect::from_center_size(
+        transform.translation * factor,
+        node.size() * factor,
+    ))
+}
+
+/// The [`Rect`] of the joystick base returned as an [`Option`].
+///
+/// It is scaled by [`ComputedNode::inverse_scale_factor`] which
+/// is needed to get the logical coordinates.
+fn joystick_base_rect(world: &World, entity: Entity) -> Option<Rect> {
+    let children = world.get::<Children>(entity)?;
+    let base = children
+        .iter()
+        .find(|entity| world.get::<VirtualJoystickUIBackground>(**entity).is_some())?;
+    joystick_rect(world, *base)
+}
+
+/// Update [`VirtualJoystickState::base_offset`] and return the associated [`TouchState`] as an [`Option`].
+fn update_base_offset(state: &mut VirtualJoystickState, rect: Rect) -> Option<&TouchState> {
+    // Return None if `state.touch_state` is `None` and set `state.base_offset` to ZERO if joystick was just released.
+    let Some(touch_state) = &state.touch_state else {
+        if state.just_released {
+            state.base_offset = Vec2::ZERO;
+        }
+        return None;
+    };
+
+    // Center `state.base_offset` from starting point if joystick was just pressed and return `touch_state`.
+    if touch_state.just_pressed {
+        state.base_offset = touch_state.start - rect.center();
+    }
+    Some(touch_state)
+}
+
+/// The normalized delta for [`VirtualJoystickState::delta`] calculated from an offset
+fn joystick_delta(rect: Rect, offset: Vec2, is_floating: bool) -> Vec2 {
+    let half_size = rect.half_size();
+    let distance_squared = offset.length_squared();
+
+    // Clamp offset to circular bounds with radius `half_size.x`.
+    let offset = if distance_squared > half_size.x.squared() {
+        offset * half_size.x / distance_squared.sqrt()
+    } else {
+        offset
+    };
+    // Normalize based on `is_floating`.
+    // If `is_floating` use circular bounds with radius `half_size.x`,
+    // otherwise use bounds of `rect`.
+    let normalizer = if is_floating {
+        Vec2::splat(half_size.x)
+    } else {
+        half_size
+    };
+
+    // Return normalized offset, now also clamped to be between `-1.` and `1.`.
+    // NOTE: We are inverting y to align with user intent because `offset` is reversed on the y axis.
+    let Vec2 { x, y } = (offset / normalizer).clamp(Vec2::NEG_ONE, Vec2::ONE);
+    Vec2::new(x, -y)
+}
+
+/// The normalized delta for [`VirtualJoystickState::base_offset`] calculated from an offset
+fn base_offset_delta(rect: Rect, offset: Vec2) -> Option<Vec2> {
+    let half_size_x = rect.half_size().x;
+    let distance_squared = offset.length_squared();
+    // Return `None` if circular bounds with radius `half_size.x` have not been reached.
+    if distance_squared <= half_size_x.squared() {
+        return None;
+    }
+
+    // Return accurate `offset` for clamping to circular bounds with radius `half_size.x` if adding
+    // it to `VirtualJoystickState::base_offset`
+    let distance = distance_squared.sqrt();
+    let offset = offset * half_size_x / distance;
+    Some(offset * (1. - half_size_x / distance))
 }
