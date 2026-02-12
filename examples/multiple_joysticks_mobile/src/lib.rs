@@ -16,8 +16,8 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 resizable: false,
-                mode: WindowMode::Fullscreen,
-                title: "Simple Joystick".to_string(),
+                mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
+                title: "Multiple Joysticks".to_string(),
                 ..default()
             }),
             ..default()
@@ -57,7 +57,7 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
         Some(Color::srgba(1.0, 0.27, 0.0, 0.3)),
         Vec2::new(75., 75.),
         Vec2::new(150., 150.),
-        Style {
+        Node {
             width: Val::Px(150.),
             height: Val::Px(150.),
             position_type: PositionType::Absolute,

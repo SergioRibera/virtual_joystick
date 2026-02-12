@@ -30,7 +30,7 @@ Aviable and compatible versions
 - Track events on Joystick (Press, Drag and Up)
 - Support Axis block (Horizontal, Vertical or Both)
 
-> **NOTE:** To compile android projects you can use [cargo-apk](https://crates.io/crates/cargo-apk) or the [docker-rust-android](https://github.com/SergioRibera/docker-rust-android) project container where you don't have to install or prepare any sdk, for more details see the readme of the mobile projects
+> **NOTE:** To compile android projects you can use [cargo-ndk](https://crates.io/crates/cargo-ndk). See the [Android Section](https://github.com/bevyengine/bevy/tree/main/examples#android) of the bevy example `README.md` for details.
 
 ### Axis
 | Both (Default)                                                                                                                 | Horizontal                                                                                                                           | Vertical                                                                                                                           |
