@@ -27,7 +27,7 @@ Aviable and compatible versions
 - Easy usage
 - Multiple Joysticks on screen
 - Multiple types of joystick behaviour
-- Track (Messages)[https://docs.rs/bevy/latest/bevy/prelude/trait.Message.html] on Joystick (Press, Drag and Up)
+- Track [Messages](https://docs.rs/bevy/latest/bevy/prelude/trait.Message.html) on Joystick (Press, Drag and Up)
 - Support Axis block (Horizontal, Vertical or Both)
 
 > **NOTE:** To compile android projects you can use [cargo-ndk](https://crates.io/crates/cargo-ndk). See the [Android Section](https://github.com/bevyengine/bevy/tree/main/examples#android) of the bevy example `README.md` for details.
