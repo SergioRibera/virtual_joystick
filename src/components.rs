@@ -31,7 +31,7 @@ pub struct VirtualJoystickUIBackground;
 #[reflect(Component, Default)]
 #[cfg_attr(feature = "inspect", derive(InspectorOptions))]
 #[cfg_attr(feature = "inspect", reflect(InspectorOptions))]
-pub struct JoystickInteractionArea;
+pub struct VirtualJoystickInteractionArea;
 
 #[derive(Component, Reflect)]
 #[reflect(Component, Default)]
