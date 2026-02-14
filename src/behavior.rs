@@ -150,7 +150,8 @@ impl VirtualJoystickBehavior for JoystickFixed {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy(),
+                joystick_base_global_transform.translation().xy()
+                    * joystick_base_node.inverse_scale_factor(),
                 joystick_base_node.size(),
             );
             joystick_base_rect = Some(rect);
@@ -278,7 +279,7 @@ impl VirtualJoystickBehavior for JoystickDynamic {
                 return;
             };
             joystick_rect = Rect::from_center_size(
-                joystick_global_transform.translation().xy(),
+                joystick_global_transform.translation().xy() * joystick_node.inverse_scale_factor(),
                 joystick_node.size(),
             );
         }
@@ -298,7 +299,8 @@ impl VirtualJoystickBehavior for JoystickDynamic {
                 continue;
             };
             let rect = Rect::from_center_size(
-                joystick_base_global_transform.translation().xy(),
+                joystick_base_global_transform.translation().xy()
+                    * joystick_base_node.inverse_scale_factor(),
                 joystick_base_node.size(),
             );
             joystick_base_rect = Some(rect);
