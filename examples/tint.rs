@@ -6,9 +6,7 @@ use virtual_joystick::*;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(EguiPlugin {
-            enable_multipass_for_primary_context: true,
-        })
+        .add_plugins(EguiPlugin::default())
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(VirtualJoystickPlugin::<String>::default())
         .add_systems(Startup, create_scene)
@@ -33,10 +31,12 @@ impl VirtualJoystickAction<String> for TintAction {
         world: &mut World,
         entity: Entity,
     ) {
-        let children = world.get::<Children>(entity).iter().collect::<Vec<_>>();
-
-        for child in children.iter() {
-            let Some(mut ui_image) = world.get_mut::<ImageNode>(*child) else {
+        let Some(children) = world.get::<Children>(entity) else {
+            return;
+        };
+        let children: Vec<_> = children.iter().collect();
+        for child in children {
+            let Some(mut ui_image) = world.get_mut::<ImageNode>(child) else {
                 continue;
             };
             ui_image.color = self.down;
@@ -50,10 +50,12 @@ impl VirtualJoystickAction<String> for TintAction {
         world: &mut World,
         entity: Entity,
     ) {
-        let children = world.get::<Children>(entity).iter().collect::<Vec<_>>();
-
-        for child in children.iter() {
-            let Some(mut ui_image) = world.get_mut::<ImageNode>(*child) else {
+        let Some(children) = world.get::<Children>(entity) else {
+            return;
+        };
+        let children: Vec<_> = children.iter().collect();
+        for child in children {
+            let Some(mut ui_image) = world.get_mut::<ImageNode>(child) else {
                 continue;
             };
             ui_image.color = self.up;
@@ -103,16 +105,14 @@ fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn update_joystick(
-    mut joystick: EventReader<VirtualJoystickEvent<String>>,
-    mut player: Query<(&mut Transform, &Player)>,
+    mut reader: MessageReader<VirtualJoystickMessage<String>>,
+    player: Single<(&mut Transform, &Player)>,
     time_step: Res<Time>,
 ) {
-    let Ok((mut player, player_data)) = player.single_mut() else {
-        return;
-    };
+    let (mut player, player_data) = player.into_inner();
 
-    for j in joystick.read() {
-        let Vec2 { x, y } = j.axis();
+    for joystick in reader.read() {
+        let Vec2 { x, y } = joystick.axis();
         player.translation.x += x * player_data.0 * time_step.delta_secs();
         player.translation.y += y * player_data.0 * time_step.delta_secs();
     }

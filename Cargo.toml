@@ -34,17 +34,17 @@ inspect = ["bevy-inspector-egui"]
 serde = ["dep:serde"]
 
 [dependencies]
-bevy = { version = "0.16", default-features = false, features = [
-    "bevy_render",
-    "bevy_ui",
-    "bevy_window",
+bevy = { version = "0.17", default-features = false, features = [
+ "bevy_render",
+ "bevy_ui",
+ "bevy_window",
 ] }
-variadics_please = "1.1"
-bevy-inspector-egui = { version = "0.31", default-features = false, features = [
-    "bevy_image",
-    "bevy_render",
+bevy-inspector-egui = { version = "0.35", default-features = false, features = [
+ "bevy_image",
+ "bevy_render",
 ], optional = true }
-serde = { version = "^1", features = ["derive"], optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
+variadics_please = "1"
 
 [dev-dependencies]
-bevy = "0.16"
+bevy = "0.17"

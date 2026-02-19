@@ -8,7 +8,7 @@ name = "simple"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-bevy = "0.16.1"
+bevy = "0.17.3"
 virtual_joystick = { path = "../../" }
 
 # FIXME: android-activity 0.6.0 is only compatible with major version 2 of games-activity which is no at 4.0.0.
