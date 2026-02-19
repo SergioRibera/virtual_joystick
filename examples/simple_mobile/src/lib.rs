@@ -8,7 +8,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 resizable: false,
-                mode: WindowMode::Fullscreen,
+                mode: WindowMode::BorderlessFullscreen(MonitorSelection::Primary),
                 title: "Simple Joystick".to_string(),
                 ..default()
             }),

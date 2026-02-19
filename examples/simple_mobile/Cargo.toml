@@ -8,5 +8,14 @@ name = "simple"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-bevy = "0.14.0"
+bevy = "0.16.1"
 virtual_joystick = { path = "../../" }
+
+# FIXME: android-activity 0.6.0 is only compatible with major version 2 of games-activity which is no at 4.0.0.
+#        This is why we are using a fix from: https://mevlyshkin.com/notes/bevy-android-input/
+#        Also see:
+#        - https://github.com/rust-mobile/android-activity/discussions/208
+#        - https://github.com/rust-mobile/android-activity/issues/210
+#        - https://github.com/bevyengine/bevy/issues/10945
+[patch.crates-io]
+android-activity = { git = "https://github.com/damus-io/android-activity", rev = "a8948332c7c551303d32eb26a59d0abd676e47a5" }
