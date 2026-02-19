@@ -18,8 +18,6 @@ in
     system ? currentSystem,
     pkgs ? import (getFlake "nixpkgs") {localSystem = {inherit system;};},
     lib ? pkgs.lib,
-    crane,
-    cranix,
     fenix,
     stdenv ? pkgs.stdenv,
     ...
@@ -28,14 +26,9 @@ in
     # toolchain = fenix.${system}.fromToolchainFile { dir = ./..; };
     toolchain = fenix.${system}.fromToolchainFile {
       file = ./rust-toolchain.toml;
-      sha256 = "sha256-SJwZ8g0zF2WrKDVmHrVG3pD2RGoQeo24MEXnNx5FyuI=";
+      sha256 = "sha256-SBKjxhC6zHTu0SyJwxLlQHItzMzYZ71VCWQC2hOzpRY=";
     };
-    # crane: cargo and artifacts manager
-    craneLib = crane.${system}.overrideToolchain toolchain;
-    # cranix: extends crane building system with workspace bin building and Mold + Cranelift integrations
-    cranixLib = craneLib.overrideScope' (cranix.${system}.craneOverride);
 
-    # buildInputs for Examples
     buildInputs = with pkgs; [
       stdenv.cc.cc.lib
       alsa-lib
@@ -51,7 +44,6 @@ in
       vulkan-loader
     ];
 
-    # Base args, need for build all crate artifacts and caching this for late builds
     deps = {
       nativeBuildInputs = with pkgs;
         [
@@ -73,34 +65,33 @@ in
       inherit buildInputs;
     };
 
-    # Lambda for build packages with cached artifacts
     commonArgs = targetName:
       deps
       // {
-        src = lib.cleanSourceWith {
-          src = craneLib.path ./.;
-          filter = craneLib.filterCargoSources;
-        };
+        src = lib.cleanSource ./.;
         doCheck = false;
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER = "${stdenv.cc.targetPrefix}cc";
         CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER = "qemu-aarch64";
         HOST_CC = "${stdenv.cc.nativePrefix}cc";
         pname = targetName;
-        cargoExtraArgs = "-F inspect --example ${targetName}";
+        version = "0.1.0";
+        cargoLock.lockFile = ./Cargo.lock;
+        cargoBuildFlags = [ "-F" "inspect" "--example" targetName ];
       };
-      invisibleApp = cranixLib.buildCranixBundle (commonArgs "invisible");
-      simpleApp = cranixLib.buildCranixBundle (commonArgs "simple");
-      multipleApp = cranixLib.buildCranixBundle (commonArgs "multiple");
+
+    invisibleApp = pkgs.rustPlatform.buildRustPackage (commonArgs "invisible");
+    simpleApp    = pkgs.rustPlatform.buildRustPackage (commonArgs "simple");
+    multipleApp  = pkgs.rustPlatform.buildRustPackage (commonArgs "multiple");
   in {
     # `nix run`
     apps = rec {
-      simple = simpleApp.app;
-      multiple = multipleApp.app;
-      invisible = invisibleApp.app;
+      simple    = { type = "app"; program = "${simpleApp}/bin/simple"; };
+      multiple  = { type = "app"; program = "${multipleApp}/bin/multiple"; };
+      invisible = { type = "app"; program = "${invisibleApp}/bin/invisible"; };
       default = multiple;
     };
     # `nix develop`
-    devShells.default = cranixLib.devShell {
+    devShells.default = pkgs.mkShell {
       packages = with pkgs;
         [
           toolchain
