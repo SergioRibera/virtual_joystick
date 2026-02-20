@@ -1,7 +1,7 @@
 [package]
 name = "virtual_joystick"
 version = "2.7.0"
-edition = "2021"
+edition = "2024"
 categories = ["game-engines", "gui"]
 description = "Bevy virtual Joystick for mobile/web/touch games with Mouse Emulation"
 exclude = ["default_assets/", ".github/", "examples/*_mobile/"]
@@ -10,7 +10,7 @@ keywords = ["game", "ui", "gamedev", "bevy", "input"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/SergioRibera/virtual_joystick"
-rust-version = "1.84.0"
+rust-version = "1.85.0"
 
 [[example]]
 name = "simple"

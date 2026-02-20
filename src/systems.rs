@@ -8,7 +8,7 @@ use bevy::{
         system::{Query, Res, Single},
         world::World,
     },
-    input::{mouse::MouseButton, touch::Touches, ButtonInput},
+    input::{ButtonInput, mouse::MouseButton, touch::Touches},
     math::{Rect, Vec2},
     prelude::Children,
     ui::{ComputedNode, Node, PositionType, UiGlobalTransform, Val},
@@ -16,30 +16,36 @@ use bevy::{
 };
 
 use crate::{
+    VirtualJoystickID, VirtualJoystickMessage, VirtualJoystickMessageType, VirtualJoystickNode,
     components::{
         TouchState, VirtualJoystickInteractionArea, VirtualJoystickState,
         VirtualJoystickUIBackground, VirtualJoystickUIKnob,
     },
-    VirtualJoystickID, VirtualJoystickMessage, VirtualJoystickMessageType, VirtualJoystickNode,
 };
 use bevy::ecs::query::Without;
 
+/// Current action being performed by the mouse/touch input
+enum DragAction {
+    Start,
+    Move,
+    End,
+}
+
+/// Add missing [`VirtualJoystickState`]s for [`Entity`]s with [`VirtualJoystickNode`]
 pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query::<(Entity, &VirtualJoystickNode<S>)>();
-    let mut joystick_entities: Vec<Entity> = Vec::new();
-    for (joystick_entity, _) in joysticks.iter(world) {
-        joystick_entities.push(joystick_entity);
-    }
-    for joystick_entity in joystick_entities {
-        let has_state = world.get::<VirtualJoystickState>(joystick_entity).is_some();
-        if !has_state {
+    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+    let joysticks: Vec<_> = joysticks.iter(world).collect();
+
+    for entity in joysticks {
+        if world.get::<VirtualJoystickState>(entity).is_none() {
             world
-                .entity_mut(joystick_entity)
+                .entity_mut(entity)
                 .insert(VirtualJoystickState::default());
         }
     }
 }
 
+/// Update stored inputs in [`VirtualJoystickState`].
 pub fn update_input(
     window: Single<&Window, With<PrimaryWindow>>,
     joystick_query: Query<(
@@ -56,243 +62,175 @@ pub fn update_input(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
 ) {
-    for (joystick_entity, joystick_node, joystick_global_transform, mut joystick_state) in
-        joystick_query
-    {
-        joystick_state.just_released = false;
-        if let Some(touch_state) = &mut joystick_state.touch_state {
+    for (entity, node, global_transform, mut state) in joystick_query {
+        state.just_released = false;
+
+        // Get interaction rect or fallback to default calculated from `joystick_query` fields.
+        let interaction_rect = interaction_rect(children_query, interaction_area_query, entity)
+            .unwrap_or_else(|| {
+                let factor = node.inverse_scale_factor;
+                Rect::from_center_size(global_transform.translation * factor, node.size() * factor)
+            });
+
+        if let Some(touch_state) = &mut state.touch_state {
             touch_state.just_pressed = false;
-        }
 
-        let mut interaction_rect: Option<Rect> = None;
-        if let Ok(children) = children_query.get(joystick_entity) {
-            for &child in children.iter() {
-                if let Ok((node, transform)) = interaction_area_query.get(child) {
-                    interaction_rect = Some(Rect::from_center_size(
-                        transform.translation * node.inverse_scale_factor(),
-                        node.size() * node.inverse_scale_factor(),
-                    ));
-                    break;
-                }
-            }
-        }
-
-        let interaction_rect = interaction_rect.unwrap_or_else(|| {
-            Rect::from_center_size(
-                joystick_global_transform.translation * joystick_node.inverse_scale_factor(),
-                joystick_node.size() * joystick_node.inverse_scale_factor(),
-            )
-        });
-
-        if joystick_state.touch_state.is_none() {
-            for touch in touches.iter() {
-                if interaction_rect.contains(touch.position()) {
-                    joystick_state.touch_state = Some(TouchState {
-                        id: touch.id(),
-                        is_mouse: false,
-                        start: touch.position(),
-                        current: touch.position(),
-                        just_pressed: true,
-                    });
-                    break;
-                }
-            }
-            if joystick_state.touch_state.is_none() && mouse_buttons.just_pressed(MouseButton::Left)
+            // Continue and clear touch state if the left mouse button has just been released or the touch
+            // input has just been released.
+            if (touch_state.is_mouse && mouse_buttons.just_released(MouseButton::Left))
+                || touches.just_released(touch_state.id)
             {
-                if let Some(mouse_pos) = window.cursor_position() {
-                    if interaction_rect.contains(mouse_pos) {
-                        joystick_state.touch_state = Some(TouchState {
-                            id: 0,
-                            is_mouse: true,
-                            start: mouse_pos,
-                            current: mouse_pos,
-                            just_pressed: true,
-                        });
-                    }
-                }
+                state.touch_state = None;
+                state.just_released = true;
+                continue;
             }
-        } else {
-            let mut clear_touch_state = false;
-            if let Some(touch_state) = &joystick_state.touch_state {
-                if touch_state.is_mouse {
-                    if mouse_buttons.just_released(MouseButton::Left) {
-                        clear_touch_state = true;
-                    }
-                } else if touches.just_released(touch_state.id) {
-                    clear_touch_state = true;
-                }
+
+            // Continue and set new current from touch input
+            if let Some(touch) = touches.get_pressed(touch_state.id) {
+                touch_state.set_new_current(touch.position());
+                continue;
             }
-            if clear_touch_state {
-                joystick_state.touch_state = None;
-                joystick_state.just_released = true;
-            } else if let Some(touch_state) = &mut joystick_state.touch_state {
-                if touch_state.is_mouse {
-                    if let Some(new_current) = window.cursor_position() {
-                        if new_current != touch_state.current {
-                            touch_state.current = new_current;
-                        }
-                    }
-                } else if let Some(touch) = touches.get_pressed(touch_state.id) {
-                    let touch_position = touch.position();
-                    if touch_position != touch_state.current {
-                        touch_state.current = touch_position;
-                    }
-                }
+            // Set new current position from cursor position if using mouse.
+            if touch_state.is_mouse
+                && let Some(current) = window.cursor_position()
+            {
+                touch_state.set_new_current(current);
             }
+        } else if let Some(touch) = touches
+            .iter()
+            .find(|touch| interaction_rect.contains(touch.position()))
+        {
+            // If using touch and within the interaction rect, set `state.touch_state` to touch input.
+            state.touch_state = Some(TouchState::from_touch_pos(touch.id(), touch.position()));
+        } else if mouse_buttons.just_pressed(MouseButton::Left)
+            && let Some(mouse_pos) = window.cursor_position()
+            && interaction_rect.contains(mouse_pos)
+        {
+            // If the left mouse button has just been pressed within the interaction rect,
+            // set `state.touch_state` to mouse input.
+            state.touch_state = Some(TouchState::from_mouse_pos(0, mouse_pos));
         }
     }
 }
 
+/// Update behavior knob delta by calling [`crate::behavior::VirtualJoystickBehavior::update_at_delta_stage`] for each joystick entity.
 pub fn update_behavior_knob_delta<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query::<(Entity, &VirtualJoystickNode<S>)>();
-    let mut joystick_entities: Vec<Entity> = Vec::new();
-    for (joystick_entity, _) in joysticks.iter(world) {
-        joystick_entities.push(joystick_entity);
-    }
-    for joystick_entity in joystick_entities {
-        let behavior;
-        {
-            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(joystick_entity)
-            else {
+    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+    let joysticks: Vec<_> = joysticks.iter(world).collect();
+
+    for entity in joysticks {
+        let behavior = {
+            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(entity) else {
                 continue;
             };
-            behavior = Arc::clone(&virtual_joystick_node.behavior);
-        }
-        behavior.update_at_delta_stage(world, joystick_entity);
+            Arc::clone(&virtual_joystick_node.behavior)
+        };
+        behavior.update_at_delta_stage(world, entity);
     }
 }
 
+/// Update behavior constraints by calling [`crate::behavior::VirtualJoystickBehavior::update_at_constraint_stage`] for each joystick entity.
 pub fn update_behavior_constraints<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query::<(Entity, &VirtualJoystickNode<S>)>();
-    let mut joystick_entities: Vec<Entity> = Vec::new();
-    for (joystick_entity, _) in joysticks.iter(world) {
-        joystick_entities.push(joystick_entity);
-    }
-    for joystick_entity in joystick_entities {
-        let behavior;
-        {
-            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(joystick_entity)
-            else {
+    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+    let joysticks: Vec<_> = joysticks.iter(world).collect();
+
+    for entity in joysticks {
+        let behavior = {
+            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(entity) else {
                 continue;
             };
-            behavior = Arc::clone(&virtual_joystick_node.behavior);
-        }
-        behavior.update_at_constraint_stage(world, joystick_entity);
+            Arc::clone(&virtual_joystick_node.behavior)
+        };
+        behavior.update_at_constraint_stage(world, entity);
     }
 }
 
+/// Update behavior by calling [`crate::behavior::VirtualJoystickBehavior::update`] for each joystick entity.
 pub fn update_behavior<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query::<(Entity, &VirtualJoystickNode<S>)>();
-    let mut joystick_entities: Vec<Entity> = Vec::new();
-    for (joystick_entity, _) in joysticks.iter(world) {
-        joystick_entities.push(joystick_entity);
-    }
-    for joystick_entity in joystick_entities {
-        let behavior;
-        {
-            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(joystick_entity)
-            else {
+    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+    let joysticks: Vec<_> = joysticks.iter(world).collect();
+
+    for entity in joysticks {
+        let behavior = {
+            let Some(virtual_joystick_node) = world.get::<VirtualJoystickNode<S>>(entity) else {
                 continue;
             };
-            behavior = Arc::clone(&virtual_joystick_node.behavior);
-        }
-        behavior.update(world, joystick_entity);
+            Arc::clone(&virtual_joystick_node.behavior)
+        };
+        behavior.update(world, entity);
     }
 }
 
+/// Update [`crate::VirtualJoystickAction`] from [`VirtualJoystickState`].
 pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
     let mut joysticks =
         world.query::<(Entity, &VirtualJoystickNode<S>, &mut VirtualJoystickState)>();
-    let mut joystick_entities: Vec<Entity> = Vec::new();
-    for (joystick_entity, _, _) in joysticks.iter(world) {
-        joystick_entities.push(joystick_entity);
-    }
-    enum DragAction {
-        StartDrag,
-        Drag,
-        EndDrag,
-    }
-    for joystick_entity in joystick_entities {
-        let drag_action: Option<DragAction>;
-        {
-            let Some(joystick_state) = world.get::<VirtualJoystickState>(joystick_entity) else {
-                continue;
-            };
-            if joystick_state.just_released {
-                drag_action = Some(DragAction::EndDrag);
-            } else if let Some(touch_state) = &joystick_state.touch_state {
-                if touch_state.just_pressed {
-                    drag_action = Some(DragAction::StartDrag);
-                } else {
-                    drag_action = Some(DragAction::Drag);
-                }
-            } else {
-                drag_action = None;
-            }
-        }
-        let Some(drag_action) = drag_action else {
+    let joysticks: Vec<_> = joysticks.iter(world).collect();
+
+    // Collect actions to be executed
+    let mut actions = Vec::new();
+    for (entity, node, state) in joysticks {
+        let Some(joystick_state) = world.get::<VirtualJoystickState>(entity) else {
             continue;
         };
-        let id;
-        let action;
-        let joystick_state;
-        {
-            let Ok((_, virtual_joystick_node, joystick_state_2)) =
-                joysticks.get_mut(world, joystick_entity)
-            else {
-                continue;
-            };
-            id = virtual_joystick_node.id.clone();
-            action = Arc::clone(&virtual_joystick_node.action);
-            joystick_state = joystick_state_2.clone();
-        }
+        let drag_action = if joystick_state.just_released {
+            DragAction::End
+        } else if let Some(touch_state) = &joystick_state.touch_state {
+            if touch_state.just_pressed {
+                DragAction::Start
+            } else {
+                DragAction::Move
+            }
+        } else {
+            continue;
+        };
+
+        actions.push((
+            node.id.clone(),
+            Arc::clone(&node.action),
+            drag_action,
+            state.clone(),
+            entity,
+        ));
+    }
+    // Execute appropriate actions for `drag_action`s
+    for (id, action, drag_action, state, entity) in actions {
         match drag_action {
-            DragAction::StartDrag => {
-                action.on_start_drag(id, joystick_state, world, joystick_entity);
+            DragAction::Start => {
+                action.on_start_drag(id, state, world, entity);
             }
-            DragAction::Drag => {
-                action.on_drag(id, joystick_state, world, joystick_entity);
+            DragAction::Move => {
+                action.on_drag(id, state, world, entity);
             }
-            DragAction::EndDrag => {
-                action.on_end_drag(id, joystick_state, world, joystick_entity);
+            DragAction::End => {
+                action.on_end_drag(id, state, world, entity);
             }
         }
     }
 }
 
+/// Send [VirtualJoystickMessage]s from [`VirtualJoystickState`].
 pub fn update_send_messages<S: VirtualJoystickID>(
     joystick_query: Query<(&VirtualJoystickNode<S>, &VirtualJoystickState)>,
     mut writer: MessageWriter<VirtualJoystickMessage<S>>,
 ) {
-    for (joystick, joystick_state) in joystick_query {
-        if joystick_state.just_released {
-            writer.write(VirtualJoystickMessage {
-                id: joystick.id.clone(),
-                message_type: VirtualJoystickMessageType::Up,
-                value: Vec2::ZERO,
-                delta: joystick_state.delta,
-            });
+    for (joystick, state) in joystick_query {
+        let id = joystick.id.clone();
+        let delta = state.delta;
+        let Some((message_type, value)) = message_type_and_value(state) else {
             continue;
-        }
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
-                writer.write(VirtualJoystickMessage {
-                    id: joystick.id.clone(),
-                    message_type: VirtualJoystickMessageType::Press,
-                    value: touch_state.current,
-                    delta: joystick_state.delta,
-                });
-            }
-            writer.write(VirtualJoystickMessage {
-                id: joystick.id.clone(),
-                message_type: VirtualJoystickMessageType::Drag,
-                value: touch_state.current,
-                delta: joystick_state.delta,
-            });
-        }
+        };
+
+        writer.write(VirtualJoystickMessage {
+            id,
+            message_type,
+            value,
+            delta,
+        });
     }
 }
 
+/// Update visual representation of the joysticks by interpreting [`VirtualJoystickState`].
 #[allow(clippy::complexity)]
 pub fn update_ui(
     mut joystick_base_query: Query<
@@ -309,52 +247,90 @@ pub fn update_ui(
     joystick_query: Query<(&VirtualJoystickState, &Children)>,
 ) {
     for (joystick_state, children) in joystick_query {
-        let mut joystick_base_rect: Option<Rect> = None;
-        for child in children.iter() {
-            if joystick_base_query.contains(*child) {
-                let (mut joystick_base_style, joystick_base_node, joystick_base_global_transform) =
-                    joystick_base_query.get_mut(*child).unwrap();
-                joystick_base_style.position_type = PositionType::Absolute;
-                joystick_base_style.left = Val::Px(joystick_state.base_offset.x);
-                joystick_base_style.top = Val::Px(joystick_state.base_offset.y);
+        let Some(base) = children
+            .iter()
+            .find(|entity| joystick_base_query.contains(**entity))
+        else {
+            return;
+        };
+        let (mut base_style, base_node, base_global_transform) =
+            joystick_base_query.get_mut(*base).unwrap();
 
-                let rect = Rect::from_center_size(
-                    joystick_base_global_transform.translation
-                        * joystick_base_node.inverse_scale_factor,
-                    joystick_base_node.size() * joystick_base_node.inverse_scale_factor,
-                );
-                joystick_base_rect = Some(rect);
+        // Adjust position of base to match `joystick_state.base_offset`
+        base_style.position_type = PositionType::Absolute;
+        base_style.left = Val::Px(joystick_state.base_offset.x);
+        base_style.top = Val::Px(joystick_state.base_offset.y);
+
+        let factor = base_node.inverse_scale_factor;
+        let base_rect_half_size = Rect::from_center_size(
+            base_global_transform.translation * factor,
+            base_node.size() * factor,
+        )
+        .half_size();
+
+        let Some(knob) = children
+            .iter()
+            .find(|entity| joystick_knob_query.contains(**entity))
+        else {
+            return;
+        };
+        let (mut knob_style, knob_node, knob_global_transform) =
+            joystick_knob_query.get_mut(*knob).unwrap();
+        let factor = knob_node.inverse_scale_factor;
+        let knob_rect_half_size = Rect::from_center_size(
+            knob_global_transform.translation * factor,
+            knob_node.size() * factor,
+        )
+        .half_size();
+
+        // Adjust position of knob to match correct axial movement.
+        let delta = joystick_state.delta;
+        let delta = Vec2::new(delta.x, -delta.y);
+        let Vec2 { x, y } = joystick_state.base_offset
+            + base_rect_half_size
+            + knob_rect_half_size
+            + base_rect_half_size * (delta - 1.);
+        knob_style.position_type = PositionType::Absolute;
+        knob_style.left = Val::Px(x);
+        knob_style.top = Val::Px(y);
+    }
+}
+
+/// The [`Rect`] representing [`VirtualJoystickInteractionArea`].
+fn interaction_rect(
+    children_query: Query<&Children>,
+    interaction_area_query: Query<
+        (&ComputedNode, &UiGlobalTransform),
+        With<VirtualJoystickInteractionArea>,
+    >,
+    entity: Entity,
+) -> Option<Rect> {
+    let children = children_query.get(entity).into_iter().next()?;
+
+    children.iter().find_map(|&child| {
+        interaction_area_query
+            .get(child)
+            .ok()
+            .map(|(node, transform)| {
+                let factor = node.inverse_scale_factor;
+                Rect::from_center_size(transform.translation * factor, node.size() * factor)
+            })
+    })
+}
+
+/// The appropriate [`VirtualJoystickMessageType`] and the appropriate [`VirtualJoystickMessage::value`] from [`VirtualJoystickState`].
+fn message_type_and_value(
+    state: &VirtualJoystickState,
+) -> Option<(VirtualJoystickMessageType, Vec2)> {
+    if state.just_released {
+        Some((VirtualJoystickMessageType::Up, Vec2::ZERO))
+    } else {
+        state.touch_state.as_ref().map(|touch_state| {
+            if touch_state.just_pressed {
+                (VirtualJoystickMessageType::Press, touch_state.current)
+            } else {
+                (VirtualJoystickMessageType::Drag, touch_state.current)
             }
-        }
-        if joystick_base_rect.is_none() {
-            continue;
-        }
-        let joystick_base_rect = joystick_base_rect.unwrap();
-        let joystick_base_rect_half_size = joystick_base_rect.half_size();
-        for child in children.iter() {
-            if joystick_knob_query.contains(*child) {
-                let (mut joystick_knob_style, joystick_knob_node, joystick_knob_global_transform) =
-                    joystick_knob_query.get_mut(*child).unwrap();
-                let joystick_knob_rect = Rect::from_center_size(
-                    joystick_knob_global_transform.translation
-                        * joystick_knob_node.inverse_scale_factor,
-                    joystick_knob_node.size() * joystick_knob_node.inverse_scale_factor,
-                );
-                let joystick_knob_half_size = joystick_knob_rect.half_size();
-                joystick_knob_style.position_type = PositionType::Absolute;
-                joystick_knob_style.left = Val::Px(
-                    joystick_state.base_offset.x
-                        + joystick_base_rect_half_size.x
-                        + joystick_knob_half_size.x
-                        + (joystick_state.delta.x - 1.0) * joystick_base_rect_half_size.x,
-                );
-                joystick_knob_style.top = Val::Px(
-                    joystick_state.base_offset.y
-                        + joystick_base_rect_half_size.y
-                        + joystick_knob_half_size.y
-                        + (-joystick_state.delta.y - 1.0) * joystick_base_rect_half_size.y,
-                );
-            }
-        }
+        })
     }
 }
