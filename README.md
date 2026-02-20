@@ -14,6 +14,7 @@ Aviable and compatible versions
 
 |  bevy  | VirtualJoystick |
 |--------|-----------------|
+|  0.18  |      2.6.0      |
 |  0.17  |      2.6.0      |
 |  0.16  |      2.5.3      |
 |  0.15  |      2.4.0      |
@@ -72,7 +73,7 @@ cargo run --example simple -F=inspect
 Add to Cargo.toml
 ```toml
 [dependencies]
-bevy = "0.12"
+bevy = "*"
 virtual_joystick = "*" # Add your version
 ```
 
