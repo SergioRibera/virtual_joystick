@@ -1,12 +1,12 @@
 # Heavily inspired by: https://github.com/bevyengine/bevy/tree/main/examples/mobile
 
 [versions]
-agp = "9.0.0"
+agp = "9.1.0"
 appcompat = "1.7.1"
-core = "1.17.0"
-gamesActivity = "4.0.0"
+core = "1.18.0"
+gamesActivity = "4.4.0"
 material = "1.13.0"
-coreKtx = "1.17.0"
+coreKtx = "1.18.0"
 
 [libraries]
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
