@@ -13,7 +13,7 @@ android {
     namespace = "com.sergioribera.multiple"
     compileSdk = 36
 
-    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/DefaultConfig
+    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/DefaultConfig
     defaultConfig {
         applicationId = "com.sergioribera.multiple"
         minSdk = 31
@@ -22,7 +22,7 @@ android {
         versionCode = 1
         // NOTE: Update with full semantic version on each release
         versionName = "0.1.0"
-        // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/variant/ExternalNativeBuild
+        // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/variant/ExternalNativeBuild
         // NOTE: We need this, otherwise libc++_shared.so will not be inserted
         @Suppress("UnstableApiUsage")
         externalNativeBuild {
@@ -30,19 +30,19 @@ android {
                 arguments("-DANDROID_STL=c++_shared")
             }
         }
-        // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/Ndk
+        // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/Ndk
         ndk {
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
         }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/ExternalNativeBuild
+    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/ExternalNativeBuild
     externalNativeBuild {
         cmake {
             path = file("CMakeLists.txt")
         }
     }
-    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/BuildType
+    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/BuildType
     buildTypes {
         getByName("release") {
             // https://developer.android.com/topic/performance/app-optimization/enable-app-optimization
@@ -51,21 +51,21 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
-    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/CompileOptions
+    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/CompileOptions
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/BuildFeatures
+    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/BuildFeatures
     buildFeatures {
         prefab = true
     }
     packaging {
-        // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/JniLibsPackaging
+        // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/JniLibsPackaging
         jniLibs.excludes.add("lib/*/libdummy.so")
         jniLibs.pickFirsts.add("lib/*/libc++_shared.so")
     }
-    // https://developer.android.com/reference/tools/gradle-api/8.13/com/android/build/api/dsl/AndroidSourceSet
+    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/AndroidSourceSet
     sourceSets {
         getByName("main") {
             assets {
