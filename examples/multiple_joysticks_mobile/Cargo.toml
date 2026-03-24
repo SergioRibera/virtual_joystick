@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "multiple"
-crate-type = ["staticlib", "cdylib"]
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
 bevy = "0.18"
