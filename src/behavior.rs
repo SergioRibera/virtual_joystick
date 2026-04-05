@@ -5,7 +5,7 @@ use bevy::{
     math::{FloatPow, Rect, Vec2},
     prelude::{Children, Visibility},
     reflect::Reflect,
-    ui::{ComputedNode, UiGlobalTransform},
+    ui::{ComputedNode, UiGlobalTransform, UiScale},
 };
 use variadics_please::all_tuples;
 
@@ -213,9 +213,10 @@ impl VirtualJoystickBehavior for JoystickFloating {
 
 /// The [`Rect`] of the joystick returned as an [`Option`].
 fn joystick_rect(world: &World, entity: Entity) -> Option<Rect> {
+    let ui_scale = world.get_resource::<UiScale>()?;
     let node = world.get::<ComputedNode>(entity)?;
     let transform = world.get::<UiGlobalTransform>(entity)?;
-    let factor = node.inverse_scale_factor;
+    let factor = node.inverse_scale_factor * ui_scale.0;
 
     Some(Rect::from_center_size(
         transform.translation * factor,
@@ -224,9 +225,6 @@ fn joystick_rect(world: &World, entity: Entity) -> Option<Rect> {
 }
 
 /// The [`Rect`] of the joystick base returned as an [`Option`].
-///
-/// It is scaled by [`ComputedNode::inverse_scale_factor`] which
-/// is needed to get the logical coordinates.
 fn joystick_base_rect(world: &World, entity: Entity) -> Option<Rect> {
     let children = world.get::<Children>(entity)?;
     let base = children

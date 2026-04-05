@@ -11,7 +11,7 @@ use bevy::{
     input::{ButtonInput, mouse::MouseButton, touch::Touches},
     math::{Rect, Vec2},
     prelude::Children,
-    ui::{ComputedNode, Node, PositionType, UiGlobalTransform, Val},
+    ui::{ComputedNode, Node, PositionType, UiGlobalTransform, UiScale, Val},
     window::{PrimaryWindow, Window},
 };
 
@@ -61,16 +61,21 @@ pub fn update_input(
     >,
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
+    ui_scale: Res<UiScale>,
 ) {
-    for (entity, node, global_transform, mut state) in joystick_query {
+    for (entity, node, transform, mut state) in joystick_query {
         state.just_released = false;
 
-        // Get interaction rect or fallback to default calculated from `joystick_query` fields.
-        let interaction_rect = interaction_rect(children_query, interaction_area_query, entity)
-            .unwrap_or_else(|| {
-                let factor = node.inverse_scale_factor;
-                Rect::from_center_size(global_transform.translation * factor, node.size() * factor)
-            });
+        // Get interaction rect or fallback to default calculated with `transform` from `joystick_query`.
+        let interaction_rect = if let Some(children) = children_query.get(entity).into_iter().next()
+            && let Some((node, interaction_transform)) = children
+                .iter()
+                .find_map(|&child| interaction_area_query.get(child).ok())
+        {
+            node_rect(node, interaction_transform.translation, ui_scale.0)
+        } else {
+            node_rect(node, transform.translation, ui_scale.0)
+        };
 
         if let Some(touch_state) = &mut state.touch_state {
             touch_state.just_pressed = false;
@@ -261,12 +266,10 @@ pub fn update_ui(
         base_style.left = Val::Px(joystick_state.base_offset.x);
         base_style.top = Val::Px(joystick_state.base_offset.y);
 
-        let factor = base_node.inverse_scale_factor;
-        let base_rect_half_size = Rect::from_center_size(
-            base_global_transform.translation * factor,
-            base_node.size() * factor,
-        )
-        .half_size();
+        // NOTE: This uses 1. for `ui_scale` to avoid double scaling since
+        //       this is later used in a calculation of a `Node` position.
+        let base_rect_half_size =
+            node_rect(base_node, base_global_transform.translation, 1.).half_size();
 
         let Some(knob) = children
             .iter()
@@ -276,15 +279,14 @@ pub fn update_ui(
         };
         let (mut knob_style, knob_node, knob_global_transform) =
             joystick_knob_query.get_mut(*knob).unwrap();
-        let factor = knob_node.inverse_scale_factor;
-        let knob_rect_half_size = Rect::from_center_size(
-            knob_global_transform.translation * factor,
-            knob_node.size() * factor,
-        )
-        .half_size();
+        // NOTE: This uses 1. for `ui_scale` to avoid double scaling since
+        //       this is later used in a calculation of a `Node` position.
+        let knob_rect_half_size =
+            node_rect(knob_node, knob_global_transform.translation, 1.).half_size();
 
         // Adjust position of knob to match correct axial movement.
         let delta = joystick_state.delta;
+        // NOTE: We are inverting y to align with user intent because `offset` is reversed on the y axis.
         let delta = Vec2::new(delta.x, -delta.y);
         let Vec2 { x, y } = joystick_state.base_offset
             + base_rect_half_size
@@ -296,26 +298,10 @@ pub fn update_ui(
     }
 }
 
-/// The [`Rect`] representing [`VirtualJoystickInteractionArea`].
-fn interaction_rect(
-    children_query: Query<&Children>,
-    interaction_area_query: Query<
-        (&ComputedNode, &UiGlobalTransform),
-        With<VirtualJoystickInteractionArea>,
-    >,
-    entity: Entity,
-) -> Option<Rect> {
-    let children = children_query.get(entity).into_iter().next()?;
-
-    children.iter().find_map(|&child| {
-        interaction_area_query
-            .get(child)
-            .ok()
-            .map(|(node, transform)| {
-                let factor = node.inverse_scale_factor;
-                Rect::from_center_size(transform.translation * factor, node.size() * factor)
-            })
-    })
+/// The [`Rect`] of a [`ComputedNode`].
+fn node_rect(node: &ComputedNode, translation: Vec2, ui_scale: f32) -> Rect {
+    let factor = node.inverse_scale_factor * ui_scale;
+    Rect::from_center_size(translation * factor, node.size() * factor)
 }
 
 /// The appropriate [`VirtualJoystickMessageType`] and the appropriate [`VirtualJoystickMessage::value`] from [`VirtualJoystickState`].
