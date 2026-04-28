@@ -66,17 +66,6 @@ pub fn update_input(
     for (entity, node, transform, mut state) in joystick_query {
         state.just_released = false;
 
-        // Get interaction rect or fallback to default calculated with `transform` from `joystick_query`.
-        let interaction_rect = if let Some(children) = children_query.get(entity).into_iter().next()
-            && let Some((node, interaction_transform)) = children
-                .iter()
-                .find_map(|&child| interaction_area_query.get(child).ok())
-        {
-            node_rect(node, interaction_transform.translation, ui_scale.0)
-        } else {
-            node_rect(node, transform.translation, ui_scale.0)
-        };
-
         if let Some(pointer_state) = &mut state.pointer_state {
             pointer_state.just_pressed = false;
 
@@ -94,19 +83,30 @@ pub fn update_input(
                     pointer_state.set_new_current(current);
                 }
             }
-        } else if let Some(touch) = touches
-            .iter()
-            .find(|touch| interaction_rect.contains(touch.position()))
-        {
-            // If using touch and within the interaction rect, set `state.pointer_state` to touch input.
-            state.pointer_state = Some(PointerState::new(Some(touch.id()), touch.position()));
-        } else if mouse_buttons.just_pressed(MouseButton::Left)
-            && let Some(mouse_pos) = window.cursor_position()
-            && interaction_rect.contains(mouse_pos)
-        {
-            // If the left mouse button has just been pressed within the interaction rect,
-            // set `state.pointer_state` to mouse input.
-            state.pointer_state = Some(PointerState::new(None, mouse_pos));
+        } else {
+            // Get rect or fallback to default calculated with `transform` from `joystick_query`.
+            let rect = if let Some(children) = children_query.get(entity).into_iter().next()
+                && let Some((node, interaction_transform)) = children
+                    .iter()
+                    .find_map(|&child| interaction_area_query.get(child).ok())
+            {
+                node_rect(node, interaction_transform.translation, ui_scale.0)
+            } else {
+                node_rect(node, transform.translation, ui_scale.0)
+            };
+
+            // Set `pointer_state` according to if input is in `interaction_rect`.
+            state.pointer_state =
+                if let Some(touch) = touches.iter().find(|touch| rect.contains(touch.position())) {
+                    Some(PointerState::new(Some(touch.id()), touch.position()))
+                } else if mouse_buttons.just_pressed(MouseButton::Left)
+                    && let Some(mouse_pos) = window.cursor_position()
+                    && rect.contains(mouse_pos)
+                {
+                    Some(PointerState::new(None, mouse_pos))
+                } else {
+                    None
+                };
         }
     }
 }
