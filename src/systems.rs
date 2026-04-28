@@ -80,8 +80,7 @@ pub fn update_input(
         if let Some(touch_state) = &mut state.touch_state {
             touch_state.just_pressed = false;
 
-            // Continue and clear touch state if the left mouse button has just been released or the touch
-            // input has just been released.
+            // Continue and clear touch state if left mouse button or touch is no longer pressed.
             if (touch_state.is_mouse && !mouse_buttons.pressed(MouseButton::Left))
                 || (!touch_state.is_mouse && touches.get_pressed(touch_state.id).is_none())
             {
