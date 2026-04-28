@@ -18,7 +18,7 @@ use bevy::{
 use crate::{
     VirtualJoystickID, VirtualJoystickMessage, VirtualJoystickMessageType, VirtualJoystickNode,
     components::{
-        TouchState, VirtualJoystickInteractionArea, VirtualJoystickState,
+        PointerState, VirtualJoystickInteractionArea, VirtualJoystickState,
         VirtualJoystickUIBackground, VirtualJoystickUIKnob,
     },
 };
@@ -77,36 +77,36 @@ pub fn update_input(
             node_rect(node, transform.translation, ui_scale.0)
         };
 
-        if let Some(touch_state) = &mut state.touch_state {
-            touch_state.just_pressed = false;
+        if let Some(pointer_state) = &mut state.pointer_state {
+            pointer_state.just_pressed = false;
 
             // Either reset `state` input if it has just been released or update with current position.
-            if let Some(id) = touch_state.id {
+            if let Some(id) = pointer_state.id {
                 if touches.just_released(id) {
                     state.reset_input();
                 } else if let Some(touch) = touches.get_pressed(id) {
-                    touch_state.set_new_current(touch.position());
+                    pointer_state.set_new_current(touch.position());
                 }
             } else {
                 if mouse_buttons.just_released(MouseButton::Left) {
                     state.reset_input();
                 } else if let Some(current) = window.cursor_position() {
-                    touch_state.set_new_current(current);
+                    pointer_state.set_new_current(current);
                 }
             }
         } else if let Some(touch) = touches
             .iter()
             .find(|touch| interaction_rect.contains(touch.position()))
         {
-            // If using touch and within the interaction rect, set `state.touch_state` to touch input.
-            state.touch_state = Some(TouchState::new(Some(touch.id()), touch.position()));
+            // If using touch and within the interaction rect, set `state.pointer_state` to touch input.
+            state.pointer_state = Some(PointerState::new(Some(touch.id()), touch.position()));
         } else if mouse_buttons.just_pressed(MouseButton::Left)
             && let Some(mouse_pos) = window.cursor_position()
             && interaction_rect.contains(mouse_pos)
         {
             // If the left mouse button has just been pressed within the interaction rect,
-            // set `state.touch_state` to mouse input.
-            state.touch_state = Some(TouchState::new(None, mouse_pos));
+            // set `state.pointer_state` to mouse input.
+            state.pointer_state = Some(PointerState::new(None, mouse_pos));
         }
     }
 }
@@ -173,8 +173,8 @@ pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
         };
         let drag_action = if joystick_state.just_released {
             DragAction::End
-        } else if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
+        } else if let Some(pointer_state) = &joystick_state.pointer_state {
+            if pointer_state.just_pressed {
                 DragAction::Start
             } else {
                 DragAction::Move
@@ -304,11 +304,11 @@ fn message_type_and_value(
     if state.just_released {
         Some((VirtualJoystickMessageType::Up, Vec2::ZERO))
     } else {
-        state.touch_state.as_ref().map(|touch_state| {
-            if touch_state.just_pressed {
-                (VirtualJoystickMessageType::Press, touch_state.current)
+        state.pointer_state.as_ref().map(|pointer_state| {
+            if pointer_state.just_pressed {
+                (VirtualJoystickMessageType::Press, pointer_state.current)
             } else {
-                (VirtualJoystickMessageType::Drag, touch_state.current)
+                (VirtualJoystickMessageType::Drag, pointer_state.current)
             }
         })
     }
