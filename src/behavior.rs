@@ -11,7 +11,7 @@ use variadics_please::all_tuples;
 
 use crate::{
     VirtualJoystickUIBackground,
-    components::{TouchState, VirtualJoystickState},
+    components::{PointerState, VirtualJoystickState},
 };
 
 pub trait VirtualJoystickBehavior: Send + Sync + 'static {
@@ -121,12 +121,12 @@ impl VirtualJoystickBehavior for JoystickInvisible {
             return;
         };
         if joystick_state.just_released
-            || *joystick_visibility != Visibility::Hidden && joystick_state.touch_state.is_none()
+            || *joystick_visibility != Visibility::Hidden && joystick_state.pointer_state.is_none()
         {
             *joystick_visibility = Visibility::Hidden;
         }
-        if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
+        if let Some(pointer_state) = &joystick_state.pointer_state {
+            if pointer_state.just_pressed {
                 *joystick_visibility = Visibility::Inherited;
             }
         }
@@ -144,14 +144,14 @@ impl VirtualJoystickBehavior for JoystickFixed {
 
         joystick_state.base_offset = Vec2::ZERO;
 
-        // Return if `touch_state` is `None` and set delta to `ZERO`.
-        let Some(touch_state) = &joystick_state.touch_state else {
+        // Return if `pointer_state` is `None` and set delta to `ZERO`.
+        let Some(pointer_state) = &joystick_state.pointer_state else {
             joystick_state.delta = Vec2::ZERO;
             return;
         };
 
         // Set `joystick_state.delta`.
-        let offset = touch_state.current - joystick_base_rect.center();
+        let offset = pointer_state.current - joystick_base_rect.center();
         joystick_state.delta = joystick_delta(joystick_base_rect, offset, false);
     }
 }
@@ -168,14 +168,15 @@ impl VirtualJoystickBehavior for JoystickDynamic {
             return;
         };
 
-        // Return if `touch_state` is `None` and set delta to `ZERO`.
-        let Some(touch_state) = update_base_offset(&mut joystick_state, joystick_base_rect) else {
+        // Return if `pointer_state` is `None` and set delta to `ZERO`.
+        let Some(pointer_state) = update_base_offset(&mut joystick_state, joystick_base_rect)
+        else {
             joystick_state.delta = Vec2::ZERO;
             return;
         };
 
         // Set `joystick_state.delta`.
-        let offset = touch_state.current
+        let offset = pointer_state.current
             - (joystick_rect.min + joystick_state.base_offset + joystick_base_rect.half_size());
         joystick_state.delta = joystick_delta(joystick_base_rect, offset, false);
 
@@ -195,18 +196,19 @@ impl VirtualJoystickBehavior for JoystickFloating {
             return;
         };
 
-        // Return if `touch_state` is `None` or `touch_state.just_pressed` and set delta to `ZERO`.
-        let Some(touch_state) = update_base_offset(&mut joystick_state, joystick_base_rect) else {
+        // Return if `pointer_state` is `None` or `pointer_state.just_pressed` and set delta to `ZERO`.
+        let Some(pointer_state) = update_base_offset(&mut joystick_state, joystick_base_rect)
+        else {
             joystick_state.delta = Vec2::ZERO;
             return;
         };
-        if touch_state.just_pressed {
+        if pointer_state.just_pressed {
             joystick_state.delta = Vec2::ZERO;
             return;
         }
 
         // Set `joystick_state.delta`.
-        let offset = touch_state.current - joystick_base_rect.center();
+        let offset = pointer_state.current - joystick_base_rect.center();
         joystick_state.delta = joystick_delta(joystick_base_rect, offset, true);
     }
 }
@@ -234,20 +236,20 @@ fn joystick_base_rect(world: &World, entity: Entity) -> Option<Rect> {
 }
 
 /// Update [`VirtualJoystickState::base_offset`] and return the associated [`TouchState`] as an [`Option`].
-fn update_base_offset(state: &mut VirtualJoystickState, rect: Rect) -> Option<&TouchState> {
-    // Return None if `state.touch_state` is `None` and set `state.base_offset` to ZERO if joystick was just released.
-    let Some(touch_state) = &state.touch_state else {
+fn update_base_offset(state: &mut VirtualJoystickState, rect: Rect) -> Option<&PointerState> {
+    // Return None if `state.pointer_state` is `None` and set `state.base_offset` to ZERO if joystick was just released.
+    let Some(pointer_state) = &state.pointer_state else {
         if state.just_released {
             state.base_offset = Vec2::ZERO;
         }
         return None;
     };
 
-    // Center `state.base_offset` from starting point if joystick was just pressed and return `touch_state`.
-    if touch_state.just_pressed {
-        state.base_offset = touch_state.start - rect.center();
+    // Center `state.base_offset` from starting point if joystick was just pressed and return `pointer_state`.
+    if pointer_state.just_pressed {
+        state.base_offset = pointer_state.start - rect.center();
     }
-    Some(touch_state)
+    Some(pointer_state)
 }
 
 /// The normalized delta for [`VirtualJoystickState::delta`] calculated from an offset

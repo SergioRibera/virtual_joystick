@@ -64,10 +64,17 @@ impl<S: VirtualJoystickID> std::fmt::Debug for VirtualJoystickNode<S> {
 #[derive(Component, Clone, Debug, Default, Reflect)]
 #[reflect(Component, Default)]
 pub struct VirtualJoystickState {
-    pub touch_state: Option<TouchState>,
+    pub pointer_state: Option<PointerState>,
     pub just_released: bool,
     pub base_offset: Vec2,
     pub delta: Vec2,
+}
+impl VirtualJoystickState {
+    // Reset input related fields.
+    pub fn reset_input(&mut self) {
+        self.pointer_state = None;
+        self.just_released = true;
+    }
 }
 
 impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
@@ -89,36 +96,25 @@ impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
 
 #[derive(Clone, Debug, Default, Reflect)]
 #[reflect(Default)]
-pub struct TouchState {
-    pub id: u64,
-    pub is_mouse: bool,
+pub struct PointerState {
+    /// Contains [`Touch`](bevy::input::touch::Touch) id if the input is a touch or [`None`] if not.
+    pub id: Option<u64>,
     pub start: Vec2,
     pub current: Vec2,
     pub just_pressed: bool,
 }
 
-impl TouchState {
+impl PointerState {
     /// Set new [`Self::current`].
     pub fn set_new_current(&mut self, new_current: Vec2) {
         if self.current != new_current {
             self.current = new_current;
         }
     }
-    /// Initialize as touch state from touch position.
-    pub fn from_touch_pos(id: u64, pos: Vec2) -> Self {
+    /// Initialize new pointer state.
+    pub fn new(id: Option<u64>, pos: Vec2) -> Self {
         Self {
             id,
-            is_mouse: false,
-            start: pos,
-            current: pos,
-            just_pressed: true,
-        }
-    }
-    /// Initialize as mouse state from mouse position.
-    pub fn from_mouse_pos(id: u64, pos: Vec2) -> Self {
-        Self {
-            id,
-            is_mouse: true,
             start: pos,
             current: pos,
             just_pressed: true,

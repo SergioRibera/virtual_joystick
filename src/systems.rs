@@ -18,7 +18,7 @@ use bevy::{
 use crate::{
     VirtualJoystickID, VirtualJoystickMessage, VirtualJoystickMessageType, VirtualJoystickNode,
     components::{
-        TouchState, VirtualJoystickInteractionArea, VirtualJoystickState,
+        PointerState, VirtualJoystickInteractionArea, VirtualJoystickState,
         VirtualJoystickUIBackground, VirtualJoystickUIKnob,
     },
 };
@@ -66,54 +66,47 @@ pub fn update_input(
     for (entity, node, transform, mut state) in joystick_query {
         state.just_released = false;
 
-        // Get interaction rect or fallback to default calculated with `transform` from `joystick_query`.
-        let interaction_rect = if let Some(children) = children_query.get(entity).into_iter().next()
-            && let Some((node, interaction_transform)) = children
-                .iter()
-                .find_map(|&child| interaction_area_query.get(child).ok())
-        {
-            node_rect(node, interaction_transform.translation, ui_scale.0)
+        if let Some(pointer_state) = &mut state.pointer_state {
+            pointer_state.just_pressed = false;
+
+            // Either reset `state` input if it has just been released or update with current position.
+            if let Some(id) = pointer_state.id {
+                if touches.just_released(id) {
+                    state.reset_input();
+                } else if let Some(touch) = touches.get_pressed(id) {
+                    pointer_state.set_new_current(touch.position());
+                }
+            } else {
+                if mouse_buttons.just_released(MouseButton::Left) {
+                    state.reset_input();
+                } else if let Some(current) = window.cursor_position() {
+                    pointer_state.set_new_current(current);
+                }
+            }
         } else {
-            node_rect(node, transform.translation, ui_scale.0)
-        };
-
-        if let Some(touch_state) = &mut state.touch_state {
-            touch_state.just_pressed = false;
-
-            // Continue and clear touch state if the left mouse button has just been released or the touch
-            // input has just been released.
-            if (touch_state.is_mouse && mouse_buttons.just_released(MouseButton::Left))
-                || touches.just_released(touch_state.id)
+            // Get rect or fallback to default calculated with `transform` from `joystick_query`.
+            let rect = if let Some(children) = children_query.get(entity).into_iter().next()
+                && let Some((node, interaction_transform)) = children
+                    .iter()
+                    .find_map(|&child| interaction_area_query.get(child).ok())
             {
-                state.touch_state = None;
-                state.just_released = true;
-                continue;
-            }
+                node_rect(node, interaction_transform.translation, ui_scale.0)
+            } else {
+                node_rect(node, transform.translation, ui_scale.0)
+            };
 
-            // Continue and set new current from touch input
-            if let Some(touch) = touches.get_pressed(touch_state.id) {
-                touch_state.set_new_current(touch.position());
-                continue;
-            }
-            // Set new current position from cursor position if using mouse.
-            if touch_state.is_mouse
-                && let Some(current) = window.cursor_position()
-            {
-                touch_state.set_new_current(current);
-            }
-        } else if let Some(touch) = touches
-            .iter()
-            .find(|touch| interaction_rect.contains(touch.position()))
-        {
-            // If using touch and within the interaction rect, set `state.touch_state` to touch input.
-            state.touch_state = Some(TouchState::from_touch_pos(touch.id(), touch.position()));
-        } else if mouse_buttons.just_pressed(MouseButton::Left)
-            && let Some(mouse_pos) = window.cursor_position()
-            && interaction_rect.contains(mouse_pos)
-        {
-            // If the left mouse button has just been pressed within the interaction rect,
-            // set `state.touch_state` to mouse input.
-            state.touch_state = Some(TouchState::from_mouse_pos(0, mouse_pos));
+            // Set `pointer_state` according to if input is in `interaction_rect`.
+            state.pointer_state =
+                if let Some(touch) = touches.iter().find(|touch| rect.contains(touch.position())) {
+                    Some(PointerState::new(Some(touch.id()), touch.position()))
+                } else if mouse_buttons.just_pressed(MouseButton::Left)
+                    && let Some(mouse_pos) = window.cursor_position()
+                    && rect.contains(mouse_pos)
+                {
+                    Some(PointerState::new(None, mouse_pos))
+                } else {
+                    None
+                };
         }
     }
 }
@@ -180,8 +173,8 @@ pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
         };
         let drag_action = if joystick_state.just_released {
             DragAction::End
-        } else if let Some(touch_state) = &joystick_state.touch_state {
-            if touch_state.just_pressed {
+        } else if let Some(pointer_state) = &joystick_state.pointer_state {
+            if pointer_state.just_pressed {
                 DragAction::Start
             } else {
                 DragAction::Move
@@ -311,11 +304,11 @@ fn message_type_and_value(
     if state.just_released {
         Some((VirtualJoystickMessageType::Up, Vec2::ZERO))
     } else {
-        state.touch_state.as_ref().map(|touch_state| {
-            if touch_state.just_pressed {
-                (VirtualJoystickMessageType::Press, touch_state.current)
+        state.pointer_state.as_ref().map(|pointer_state| {
+            if pointer_state.just_pressed {
+                (VirtualJoystickMessageType::Press, pointer_state.current)
             } else {
-                (VirtualJoystickMessageType::Drag, touch_state.current)
+                (VirtualJoystickMessageType::Drag, pointer_state.current)
             }
         })
     }
