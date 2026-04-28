@@ -80,40 +80,33 @@ pub fn update_input(
         if let Some(touch_state) = &mut state.touch_state {
             touch_state.just_pressed = false;
 
-            // Continue and clear touch state if the left mouse button has just been released or the touch
-            // input has just been released.
-            if (touch_state.is_mouse && mouse_buttons.just_released(MouseButton::Left))
-                || touches.just_released(touch_state.id)
-            {
-                state.touch_state = None;
-                state.just_released = true;
-                continue;
-            }
-
-            // Continue and set new current from touch input
-            if let Some(touch) = touches.get_pressed(touch_state.id) {
-                touch_state.set_new_current(touch.position());
-                continue;
-            }
-            // Set new current position from cursor position if using mouse.
-            if touch_state.is_mouse
-                && let Some(current) = window.cursor_position()
-            {
-                touch_state.set_new_current(current);
+            // Either reset `state` input if it has just been released or update with current position.
+            if let Some(id) = touch_state.id {
+                if touches.just_released(id) {
+                    state.reset_input();
+                } else if let Some(touch) = touches.get_pressed(id) {
+                    touch_state.set_new_current(touch.position());
+                }
+            } else {
+                if mouse_buttons.just_released(MouseButton::Left) {
+                    state.reset_input();
+                } else if let Some(current) = window.cursor_position() {
+                    touch_state.set_new_current(current);
+                }
             }
         } else if let Some(touch) = touches
             .iter()
             .find(|touch| interaction_rect.contains(touch.position()))
         {
             // If using touch and within the interaction rect, set `state.touch_state` to touch input.
-            state.touch_state = Some(TouchState::from_touch_pos(touch.id(), touch.position()));
+            state.touch_state = Some(TouchState::new(Some(touch.id()), touch.position()));
         } else if mouse_buttons.just_pressed(MouseButton::Left)
             && let Some(mouse_pos) = window.cursor_position()
             && interaction_rect.contains(mouse_pos)
         {
             // If the left mouse button has just been pressed within the interaction rect,
             // set `state.touch_state` to mouse input.
-            state.touch_state = Some(TouchState::from_mouse_pos(0, mouse_pos));
+            state.touch_state = Some(TouchState::new(None, mouse_pos));
         }
     }
 }

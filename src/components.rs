@@ -69,6 +69,13 @@ pub struct VirtualJoystickState {
     pub base_offset: Vec2,
     pub delta: Vec2,
 }
+impl VirtualJoystickState {
+    // Reset input related fields.
+    pub fn reset_input(&mut self) {
+        self.touch_state = None;
+        self.just_released = true;
+    }
+}
 
 impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
     pub fn with_id(mut self, id: S) -> Self {
@@ -90,8 +97,7 @@ impl<S: VirtualJoystickID> VirtualJoystickNode<S> {
 #[derive(Clone, Debug, Default, Reflect)]
 #[reflect(Default)]
 pub struct TouchState {
-    pub id: u64,
-    pub is_mouse: bool,
+    pub id: Option<u64>,
     pub start: Vec2,
     pub current: Vec2,
     pub just_pressed: bool,
@@ -104,21 +110,10 @@ impl TouchState {
             self.current = new_current;
         }
     }
-    /// Initialize as touch state from touch position.
-    pub fn from_touch_pos(id: u64, pos: Vec2) -> Self {
+    /// Initialize new touch state.
+    pub fn new(id: Option<u64>, pos: Vec2) -> Self {
         Self {
             id,
-            is_mouse: false,
-            start: pos,
-            current: pos,
-            just_pressed: true,
-        }
-    }
-    /// Initialize as mouse state from mouse position.
-    pub fn from_mouse_pos(id: u64, pos: Vec2) -> Self {
-        Self {
-            id,
-            is_mouse: true,
             start: pos,
             current: pos,
             just_pressed: true,
