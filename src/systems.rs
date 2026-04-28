@@ -83,7 +83,7 @@ pub fn update_input(
             // Continue and clear touch state if the left mouse button has just been released or the touch
             // input has just been released.
             if (touch_state.is_mouse && mouse_buttons.just_released(MouseButton::Left))
-                || touches.get_pressed(touch_state.id).is_none()
+                || (!touch_state.is_mouse && touches.get_pressed(touch_state.id).is_none())
             {
                 state.touch_state = None;
                 state.just_released = true;
