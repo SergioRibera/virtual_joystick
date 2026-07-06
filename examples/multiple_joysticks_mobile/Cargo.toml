@@ -8,5 +8,5 @@ name = "multiple"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-bevy = "0.19"
+bevy = { version = "0.19", features = ["android-game-activity"] }
 virtual_joystick = { path = "../../" }
