@@ -69,15 +69,15 @@ pub fn update_input(
         if let Some(pointer_state) = &mut state.pointer_state {
             pointer_state.just_pressed = false;
 
-            // Either reset `state` input if it has just been released or update with current position.
+            // Either reset `state` input if it is not pressed or update with current position.
             if let Some(id) = pointer_state.id {
-                if touches.just_released(id) {
-                    state.reset_input();
-                } else if let Some(touch) = touches.get_pressed(id) {
+                if let Some(touch) = touches.get_pressed(id) {
                     pointer_state.set_new_current(touch.position());
+                } else {
+                    state.reset_input();
                 }
             } else {
-                if mouse_buttons.just_released(MouseButton::Left) {
+                if !mouse_buttons.pressed(MouseButton::Left) {
                     state.reset_input();
                 } else if let Some(current) = window.cursor_position() {
                     pointer_state.set_new_current(current);
