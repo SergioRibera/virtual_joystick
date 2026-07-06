@@ -70,7 +70,7 @@ pub struct VirtualJoystickState {
     pub delta: Vec2,
 }
 impl VirtualJoystickState {
-    // Reset input related fields.
+    /// Reset input related fields.
     pub fn reset_input(&mut self) {
         self.pointer_state = None;
         self.just_released = true;
