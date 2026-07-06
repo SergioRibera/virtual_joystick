@@ -1,47 +1,54 @@
 package com.sergioribera.simple
 
+import android.os.Bundle
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.androidgamesdk.GameActivity
 
 /**
- * Loads the rust library and handles android specific to integrate with it.
+ * Load rust library and handle android specifics to integrate with it.
  *
  *
  * The library is loaded at class initialization and provided by jniLibs.
  */
 class MainActivity : GameActivity() {
     /**
-     * Called when the current Window of the activity gains or loses focus.
+     * Enable edge to edge when the activity is starting.
      *
      *
-     * This just hides the system UI if the app window is focused.
+     * This is the default behavior after Android SDK 34 but is needed for backwards compatibility.
+     */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // Call parent class implementation of onCreate.
+        super.onCreate(savedInstanceState)
+
+        WindowCompat.enableEdgeToEdge(window)
+    }
+
+    /**
+     * Hide system UI if the current window gains or loses focus.
      */
     override fun onWindowFocusChanged(hasFocus: Boolean) {
-        // Call parent class implementation of onWindowFocusChanged to make sure that we are updating correctly.
+        // Call parent class implementation of onWindowFocusChanged.
         super.onWindowFocusChanged(hasFocus)
 
-        // If the window has focus, hide system UI.
         if (hasFocus) {
             hideSystemUi()
         }
     }
 
     /**
-     * Hides system UI.
-     *
-     *
-     * This will make the app content fill the entire screen.
+     * Hide system UI.
      */
     private fun hideSystemUi() {
-        val windowInsetsController =
-            WindowCompat.getInsetsController(window, window.decorView)
-
-        // Show bars if swiping
-        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        // Hide both the status bar and the navigation bar.
-        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+        window.decorView.post {
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            // Show bars if swiping
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            // Hide both the status bar and the navigation bar.
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+        }
     }
 
     companion object {

@@ -2,45 +2,40 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+java {
+    // https://docs.gradle.org/current/userguide/toolchains.html
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 kotlin {
+    // https://kotlinlang.org/docs/gradle-compiler-options.html#all-compiler-options
     compilerOptions {
         languageVersion = org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_3
-        jvmToolchain(8)
+        jvmToolchain(17)
     }
 }
 
 android {
     namespace = "com.sergioribera.multiple"
-    compileSdk = 36
+    compileSdk = 37
 
     // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/DefaultConfig
     defaultConfig {
         applicationId = "com.sergioribera.multiple"
-        minSdk = 31
-        targetSdk = 36
+        // NOTE: `minSdk` is 26 because this is the minimum supported by `bevy_audio`
+        minSdk = 26
+        targetSdk = 37
         // NOTE: Increase by 1 on each release
         versionCode = 1
         // NOTE: Update with full semantic version on each release
-        versionName = "0.1.0"
-        // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/variant/ExternalNativeBuild
-        // NOTE: We need this, otherwise libc++_shared.so will not be inserted
-        @Suppress("UnstableApiUsage")
-        externalNativeBuild {
-            cmake {
-                arguments("-DANDROID_STL=c++_shared")
-            }
-        }
+        versionName = "0.0.0"
         // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/Ndk
         ndk {
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a", "x86_64"))
         }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/ExternalNativeBuild
-    externalNativeBuild {
-        cmake {
-            path = file("CMakeLists.txt")
-        }
     }
     // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/BuildType
     buildTypes {
@@ -53,17 +48,8 @@ android {
     }
     // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/CompileOptions
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/BuildFeatures
-    buildFeatures {
-        prefab = true
-    }
-    packaging {
-        // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/JniLibsPackaging
-        jniLibs.excludes.add("lib/*/libdummy.so")
-        jniLibs.pickFirsts.add("lib/*/libc++_shared.so")
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     // https://developer.android.com/reference/tools/gradle-api/9.1/com/android/build/api/dsl/AndroidSourceSet
     sourceSets {
