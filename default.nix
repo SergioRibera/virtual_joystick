@@ -26,7 +26,7 @@ in
     # toolchain = fenix.${system}.fromToolchainFile { dir = ./..; };
     toolchain = fenix.${system}.fromToolchainFile {
       file = ./rust-toolchain.toml;
-      sha256 = "sha256-SBKjxhC6zHTu0SyJwxLlQHItzMzYZ71VCWQC2hOzpRY=";
+      sha256 = "sha256-OATSZm98Es5kIFuqaba+UvkQtFsVgJEBMmS+t6od5/U=";
     };
 
     buildInputs = with pkgs; [
@@ -37,10 +37,10 @@ in
       libxkbcommon.dev
       wayland
       wayland-protocols
-      xorg.libX11
-      xorg.libXcursor
-      xorg.libXrandr
-      xorg.libXi
+      libx11
+      libxcursor
+      libxrandr
+      libxi
       vulkan-loader
     ];
 
