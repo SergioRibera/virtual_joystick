@@ -1,6 +1,6 @@
 [package]
 name = "virtual_joystick"
-version = "2.7.2"
+version = "2.8.0"
 edition = "2024"
 categories = ["game-engines", "gui"]
 description = "Bevy virtual Joystick for mobile/web/touch games with Mouse Emulation"
