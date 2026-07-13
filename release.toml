@@ -4,9 +4,10 @@ release = true
 publish = true
 verify = true
 push = true
+consolidate-commits = false
 pre-release-commit-message = "chore: Release {{crate_name}} version {{version}}"
 pre-release-replacements = [
-    { file = "README.md", search = "\\|  0.18  \\|      [0-9\\.-]+      \\|", replace = "|  0.18  |      {{version}}      |" },
+    { file = "README.md", search = "\\|  0.19  \\|      [0-9\\.-]+      \\|", replace = "|  0.19  |      {{version}}      |" },
 ]
 tag-message = "chore: Release {{crate_name}} version {{version}}"
 tag-name = "{{version}}"
