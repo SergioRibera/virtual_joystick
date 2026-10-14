@@ -4,7 +4,7 @@ use bevy::{
     ecs::{
         entity::Entity,
         message::MessageWriter,
-        query::With,
+        query::{QueryState, With},
         system::{Query, Res, Single},
         world::World,
     },
@@ -32,8 +32,10 @@ enum DragAction {
 }
 
 /// Add missing [`VirtualJoystickState`]s for [`Entity`]s with [`VirtualJoystickNode`]
-pub fn update_missing_state<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+pub fn update_missing_state<S: VirtualJoystickID>(
+    world: &mut World,
+    joysticks: &mut QueryState<Entity, With<VirtualJoystickNode<S>>>,
+) {
     let joysticks: Vec<_> = joysticks.iter(world).collect();
 
     for entity in joysticks {
@@ -112,8 +114,10 @@ pub fn update_input(
 }
 
 /// Update behavior knob delta by calling [`crate::behavior::VirtualJoystickBehavior::update_at_delta_stage`] for each joystick entity.
-pub fn update_behavior_knob_delta<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+pub fn update_behavior_knob_delta<S: VirtualJoystickID>(
+    world: &mut World,
+    joysticks: &mut QueryState<Entity, With<VirtualJoystickNode<S>>>,
+) {
     let joysticks: Vec<_> = joysticks.iter(world).collect();
 
     for entity in joysticks {
@@ -128,8 +132,10 @@ pub fn update_behavior_knob_delta<S: VirtualJoystickID>(world: &mut World) {
 }
 
 /// Update behavior constraints by calling [`crate::behavior::VirtualJoystickBehavior::update_at_constraint_stage`] for each joystick entity.
-pub fn update_behavior_constraints<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+pub fn update_behavior_constraints<S: VirtualJoystickID>(
+    world: &mut World,
+    joysticks: &mut QueryState<Entity, With<VirtualJoystickNode<S>>>,
+) {
     let joysticks: Vec<_> = joysticks.iter(world).collect();
 
     for entity in joysticks {
@@ -144,8 +150,10 @@ pub fn update_behavior_constraints<S: VirtualJoystickID>(world: &mut World) {
 }
 
 /// Update behavior by calling [`crate::behavior::VirtualJoystickBehavior::update`] for each joystick entity.
-pub fn update_behavior<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks = world.query_filtered::<Entity, With<VirtualJoystickNode<S>>>();
+pub fn update_behavior<S: VirtualJoystickID>(
+    world: &mut World,
+    joysticks: &mut QueryState<Entity, With<VirtualJoystickNode<S>>>,
+) {
     let joysticks: Vec<_> = joysticks.iter(world).collect();
 
     for entity in joysticks {
@@ -160,9 +168,10 @@ pub fn update_behavior<S: VirtualJoystickID>(world: &mut World) {
 }
 
 /// Update [`crate::VirtualJoystickAction`] from [`VirtualJoystickState`].
-pub fn update_action<S: VirtualJoystickID>(world: &mut World) {
-    let mut joysticks =
-        world.query::<(Entity, &VirtualJoystickNode<S>, &mut VirtualJoystickState)>();
+pub fn update_action<S: VirtualJoystickID>(
+    world: &mut World,
+    joysticks: &mut QueryState<(Entity, &VirtualJoystickNode<S>, &mut VirtualJoystickState)>,
+) {
     let joysticks: Vec<_> = joysticks.iter(world).collect();
 
     // Collect actions to be executed
