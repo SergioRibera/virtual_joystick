@@ -22,80 +22,78 @@ use crate::{
 ///
 /// Usage:
 /// ```no_run
-/// create_joystick(
-///     cmd,
-///     asset_server.load("Knob.png"),
-///     asset_server.load("Outline.png"),
-///     None,
-///     None,
-///     Some(Color::rgba(1.0, 0.27, 0.0, 0.3))),
-///     Vec2::new(75., 75.),
-///     Vec2::new(150., 150.),
-///     VirtualJoystickNode {
-///         dead_zone: 0.,
-///         id: "UniqueJoystick".to_string(),
-///         axis: VirtualJoystickAxis::Both,
-///         behaviour: VirtualJoystickType::Floating,
-///     },
-///     Node {
-///         width: Val::Px(150.),
-///         height: Val::Px(150.),
-///         position_type: PositionType::Absolute,
-///         left: Val::Percent(50.),
-///         bottom: Val::Percent(15.),
-///         ..default()
-///     },
-/// );
+/// use bevy::prelude::*;
+/// use virtual_joystick::*;
+/// fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
+///     create_joystick(
+///         &mut cmd,
+///         "UniqueJoystick".to_string(),
+///         asset_server.load("Knob.png"),
+///         asset_server.load("Outline.png"),
+///         None,
+///         None,
+///         Some(Color::srgba(1.0, 0.27, 0.0, 0.3)),
+///         Vec2::new(75., 75.),
+///         Vec2::new(150., 150.),
+///         Node {
+///             width: Val::Px(150.),
+///             height: Val::Px(150.),
+///             position_type: PositionType::Absolute,
+///             left: Val::Percent(50.),
+///             bottom: Val::Percent(15.),
+///             ..default()
+///         },
+///         JoystickFloating,
+///         NoAction,
+///     );
+/// }
 /// ```
 ///
 /// if you not want use this function helper, you need do that
 /// ```no_run
-/// cmd.spawn((
-///     VirtualJoystickBundle::new(VirtualJoystickNode {
-///         dead_zone: 0.,
-///         id: "UniqueJoystick".to_string(),
-///         axis: VirtualJoystickAxis::Both,
-///         behaviour: VirtualJoystickType::Floating,
-///     })
-///     .set_style(Node {
-///         width: Val::Px(150.),
-///         height: Val::Px(150.),
-///         position_type: PositionType::Absolute,
-///         left: Val::Percent(50.),
-///         bottom: Val::Percent(15.),
-///         ..default()
-///     }),
-///     BackgroundColor(Color::rgba(1.0, 0.27, 0.0, 0.3))),
-/// ))
-/// .insert(VirtualJoystickInteractionArea)
-/// .with_children(|parent| {
-///     parent.spawn((
-///         VirtualJoystickUIKnob,
-///         ImageBundle {
-///             image: asset_server.load("Knob.png").into(),
-///             style: Style {
+/// use bevy::prelude::*;
+/// use virtual_joystick::*;
+/// fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
+///     cmd.spawn((
+///         VirtualJoystickBundle::new(
+///             VirtualJoystickNode::<String>::default().with_id("UniqueJoystick".to_string()),
+///         )
+///         .set_style(Node {
+///             width: Val::Px(150.),
+///             height: Val::Px(150.),
+///             position_type: PositionType::Absolute,
+///             left: Val::Percent(50.),
+///             bottom: Val::Percent(15.),
+///             ..default()
+///         }),
+///         BackgroundColor(Color::srgba(1.0, 0.27, 0.0, 0.3)),
+///     ))
+///     .insert(VirtualJoystickInteractionArea)
+///     .with_children(|parent| {
+///         parent.spawn((
+///             VirtualJoystickUIKnob,
+///             ImageNode::new(asset_server.load("Knob.png")),
+///             Node {
+///                 position_type: PositionType::Absolute,
 ///                 width: Val::Px(75.),
 ///                 height: Val::Px(75.),
 ///                 ..default()
 ///             },
-///             background_color: Color::WHITE.into(),
-///             ..default()
-///         },
-///     ));
-///     parent.spawn((
-///         VirtualJoystickUIBackground,
-///         ImageBundle {
-///             image: asset_server.load("Outline.png").into(),
-///             style: Style {
+///             ZIndex(1),
+///         ));
+///         parent.spawn((
+///             VirtualJoystickUIBackground,
+///             ImageNode::new(asset_server.load("Outline.png")),
+///             Node {
+///                 position_type: PositionType::Absolute,
 ///                 width: Val::Px(150.),
 ///                 height: Val::Px(150.),
 ///                 ..default()
 ///             },
-///             background_color: Color::WHITE.into(),
-///             ..default()
-///         },
-///     ));
-/// });
+///             ZIndex(0),
+///         ));
+///     });
+/// }
 /// ```
 #[allow(clippy::too_many_arguments)]
 pub fn create_joystick<I: VirtualJoystickID>(

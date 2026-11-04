@@ -25,12 +25,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: dsherret/rust-toolchain-file@v1
       - name: Install Dependencies
-        run: sudo apt-get update; sudo apt-get install pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+        run: sudo apt-get update; sudo apt-get install pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libwayland-dev libxkbcommon-dev
       - name: Run clippy
         uses: actions-rs/cargo@v1.0.1
         with:
-          args: -- -D warnings
+          args: --workspace --all-targets --all-features -- -D warnings
           command: clippy
+      - name: Run tests
+        run: cargo test --workspace --all-features
 
   # Run cargo fmt --all -- --check
   format:

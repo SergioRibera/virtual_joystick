@@ -125,10 +125,10 @@ impl VirtualJoystickBehavior for JoystickInvisible {
         {
             *joystick_visibility = Visibility::Hidden;
         }
-        if let Some(pointer_state) = &joystick_state.pointer_state {
-            if pointer_state.just_pressed {
-                *joystick_visibility = Visibility::Inherited;
-            }
+        if let Some(pointer_state) = &joystick_state.pointer_state
+            && pointer_state.just_pressed
+        {
+            *joystick_visibility = Visibility::Inherited;
         }
     }
 }

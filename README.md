@@ -10,10 +10,11 @@
 Create and use a Virtual Joystick in a UI for [bevy](https://bevyengine.org/) Game Engine.
 
 # Versions
-Aviable and compatible versions
+VirtualJoystick 2.9.0 targets Bevy 0.20.1 and requires Rust 1.97.1. Version 2.9.0 is not yet published; the registry dependency examples below apply after publication. Published 2.8.0 still targets Bevy 0.19.
 
 |  bevy  | VirtualJoystick |
 |--------|-----------------|
+|  0.20  | 2.9.0 (unreleased) |
 |  0.19  |      2.8.0      |
 |  0.18  |      2.7.2      |
 |  0.17  |      2.6.0      |
@@ -56,11 +57,10 @@ Aviable and compatible versions
 - [`serde`](https://serde.rs) (default): for serialization support for all types (usable for save and load settings)
 
 ```toml
-virtual_joystick = {
-    version = "*",
-    default-features = false,
-    features = [ "inspect", "serde" ]
-}
+[dependencies.virtual_joystick]
+version = "2.9.0"
+default-features = false
+features = [ "inspect", "serde" ]
 ```
 
 # Usage
@@ -74,8 +74,8 @@ cargo run --example simple -F=inspect
 Add to Cargo.toml
 ```toml
 [dependencies]
-bevy = "*"
-virtual_joystick = "*" # Add your version
+bevy = "0.20.1"
+virtual_joystick = "2.9.0"
 ```
 
 The minimal requirement:
@@ -98,7 +98,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         // Add plugin to application
         .add_plugins(VirtualJoystickPlugin::<JoystickControllerID>::default())
-        .run()
+        .run();
 }
 ```
 
@@ -109,23 +109,25 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         // Add plugin to application
-        .add_plugins(VirtualJoystickPlugin::<String>::default())
+        .add_plugins(VirtualJoystickPlugin::<JoystickControllerID>::default())
         // Create system
-        .add_startup_system(create_scene)
+        .add_systems(Startup, create_scene)
         // update System
-        .add_system(update_player)
-        .run()
+        .add_systems(Update, update_joystick)
+        .run();
 }
 
+#[derive(Component)]
+struct Player(pub f32);
 
 fn create_scene(mut cmd: Commands, asset_server: Res<AssetServer>) {
-    cmd.spawn(Camera2dBundle::default());
-    cmd.spawn_empty().insert(Player(30.));
+    cmd.spawn(Camera2d);
+    cmd.spawn((Player(30.), Transform::default()));
 
     // Spawn Virtual Joystick at horizontal center
     create_joystick(
         &mut cmd,
-        "UniqueJoystick".to_string(),
+        JoystickControllerID::Joystick1,
         asset_server.load("Knob.png"),
         asset_server.load("Outline.png"),
         None,
@@ -167,6 +169,7 @@ fn update_joystick(
                 player.translation.x += x * player_data.0 * time_step.delta_secs();
                 player.translation.y += y * player_data.0 * time_step.delta_secs();
             }
+            JoystickControllerID::Joystick2 => {}
         }
     }
 }
