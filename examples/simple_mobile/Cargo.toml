@@ -2,11 +2,12 @@
 name = "simple"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.97.1"
 
 [lib]
 name = "simple"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-bevy = { version = "0.19", features = ["android-game-activity"] }
+bevy = { version = "0.20.1", features = ["android-game-activity"] }
 virtual_joystick = { path = "../../" }
